@@ -1,6 +1,10 @@
 .PHONY: build
 build: install-lambda-toolkit bin/release/VendingMachine.zip
 
+.PHONY: test
+test:
+	@dotnet test VendingMachine/test/VendingMachine.Tests
+
 .PHONY: fmt
 fmt:
 	@terraform fmt -recursive terraform

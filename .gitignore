@@ -55,3 +55,6 @@ nunit-*.xml
 
 # Visual studio things
 .vs/
+
+# Terraform things
+.terraform

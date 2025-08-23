@@ -43,11 +43,11 @@ resource "aws_apigatewayv2_stage" "prod" {
 module "endpoint_vending_machine" {
   source = "./modules/dotnet_lambda_api_endpoint"
 
-  name            = "VendingMachine"
-  prefix          = local.prefix
-  api_gateway_id  = aws_apigatewayv2_api.vending_machine.id
-  api_gateway_arn = aws_apigatewayv2_api.vending_machine.arn
+  name                      = "VendingMachine"
+  prefix                    = local.prefix
+  api_gateway_id            = aws_apigatewayv2_api.vending_machine.id
+  api_gateway_arn           = aws_apigatewayv2_api.vending_machine.arn
   api_gateway_execution_arn = aws_apigatewayv2_api.vending_machine.execution_arn
-  method          = "POST"
-  path            = "/machine"
+  method                    = "POST"
+  path                      = "/machine"
 }

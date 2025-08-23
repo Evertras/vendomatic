@@ -1,9 +1,10 @@
 resource "aws_lambda_function" "lambda" {
-  filename      = "${path.module}/../../../bin/release/${var.name}.zip"
-  function_name = local.prefix
-  role          = aws_iam_role.lambda_exec.arn
-  handler       = "VendingMachine::VendingMachine.Function::FunctionHandler"
-  runtime       = "dotnet8"
+  filename         = local.lambda_filename
+  source_code_hash = filebase64sha256(local.lambda_filename)
+  function_name    = local.prefix
+  role             = aws_iam_role.lambda_exec.arn
+  handler          = "VendingMachine::VendingMachine.Function::FunctionHandler"
+  runtime          = "dotnet8"
 
   depends_on = [aws_iam_role_policy_attachment.attach_log_policy]
 }

@@ -9,5 +9,6 @@ variable "prefix" {
 }
 
 locals {
-  prefix = "${var.prefix}-${var.name}"
+  prefix          = "${var.prefix}-${var.name}"
+  lambda_filename = "${path.module}/../../../bin/release/${var.name}.zip"
 }

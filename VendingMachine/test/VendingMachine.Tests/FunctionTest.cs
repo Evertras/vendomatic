@@ -22,5 +22,6 @@ public class FunctionTest
         var result = function.FunctionHandler(input);
 
         Assert.Equal("HELLO WORLD!", result.Body);
+        Assert.Equal(200, result.StatusCode);
     }
 }

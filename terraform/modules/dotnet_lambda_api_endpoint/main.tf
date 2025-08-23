@@ -3,6 +3,7 @@ module "lambda" {
 
   name   = "VendingMachine"
   prefix = var.prefix
+  dynamodb_table_arn = var.dynamodb_table_arn
 }
 
 resource "aws_lambda_permission" "execute_lambda_from_api_gw" {

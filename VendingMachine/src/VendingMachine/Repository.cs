@@ -13,7 +13,7 @@ namespace VendingMachine
 {
     internal interface IRepository
     {
-        Task AddMachineAsync(Machine machine);
+        Task<string> AddMachineAsync(Machine machine);
         Task<List<Machine>> ListMachinesAsync();
     }
 
@@ -29,9 +29,10 @@ namespace VendingMachine
             _tableName = tableName;
         }
 
-        public async Task AddMachineAsync(Machine machine)
+        public async Task<string> AddMachineAsync(Machine machine)
         {
-            machine.PK = "MAC#" + Guid.NewGuid().ToString();
+            var id = Guid.NewGuid().ToString();
+            machine.PK = "MAC#" + id;
             machine.SK = machine.PK;
             machine.CreatedAt = DateTime.UtcNow;
 
@@ -49,6 +50,8 @@ namespace VendingMachine
             var result = await _dynamodDB.PutItemAsync(createRequest);
 
             Console.WriteLine(JsonSerializer.Serialize(result));
+
+            return id;
         }
 
         public async Task<List<Machine>> ListMachinesAsync()

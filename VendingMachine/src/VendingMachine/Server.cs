@@ -42,28 +42,53 @@ namespace VendingMachine
             };
         }
 
+        // Figure out a better place later, but for now just a cheaty spot for this
+        internal class CreateMachineRequest
+        {
+            public string? Name { get; set; }
+        }
+
+        internal class CreateMachineResponse
+        {
+            public string Id { get; set; } = string.Empty;
+        }
+
         internal async Task<APIGatewayHttpApiV2ProxyResponse> CreateMachine(APIGatewayHttpApiV2ProxyRequest input)
         {
-            var body = string.IsNullOrEmpty(input.Body) ? "ok" : input.Body;
+            if (string.IsNullOrEmpty(input.Body))
+            {
+                throw new ArgumentException("No body");
+            }
+
+            var body = input.Body;
+
             if (input.IsBase64Encoded)
             {
                 var bytes = Convert.FromBase64String(input.Body);
                 body = Encoding.UTF8.GetString(bytes);
             }
-            if (string.IsNullOrEmpty(body))
+
+            // TODO: try/catch here for json fails
+
+            var req = JsonSerializer.Deserialize<CreateMachineRequest>(body);
+
+            if (req == null || string.IsNullOrEmpty(req.Name))
             {
-                throw new ArgumentException("No body");
+                throw new ArgumentException("Invalid request, must provide Name");
             }
+
             var machine = new Models.Machine
             {
-                Name = body
+                Name = req.Name,
             };
-            await _repository.AddMachineAsync(machine);
-            var response = new APIGatewayHttpApiV2ProxyResponse
+
+            var id = await _repository.AddMachineAsync(machine);
+
+            return new APIGatewayHttpApiV2ProxyResponse
             {
                 StatusCode = 201,
+                Body = JsonSerializer.Serialize(new CreateMachineResponse { Id = id }),
             };
-            return response;
         }
 
         internal async Task<APIGatewayHttpApiV2ProxyResponse> ListMachines(APIGatewayHttpApiV2ProxyRequest input)

@@ -24,6 +24,6 @@ public class Function
     
     public async Task<APIGatewayHttpApiV2ProxyResponse> FunctionHandler(APIGatewayHttpApiV2ProxyRequest input)
     {
-        return await _server.HandlRequest(input);
+        return await _server.HandleRequest(input);
     }
 }

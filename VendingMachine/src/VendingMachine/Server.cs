@@ -24,7 +24,8 @@ namespace VendingMachine
             // TODO: better logging
             Console.WriteLine(JsonSerializer.Serialize(input));
 
-            // Dumbest router ever, but for now it works
+            // Dumbest router ever, but for now it works... note this is keyed off AWS API Gateway integration entries,
+            // not the actual HTTP method and path
             switch (input.RouteKey)
             {
                 case "POST /api/v1/machine":

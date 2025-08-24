@@ -18,6 +18,7 @@ resource "aws_lambda_permission" "execute_lambda_from_api_gw" {
 resource "aws_apigatewayv2_integration" "api_integration" {
   api_id           = var.api_gateway_id
   integration_type = "AWS_PROXY"
+  payload_format_version = "2.0"
 
   connection_type      = "INTERNET"
   integration_method   = "POST"

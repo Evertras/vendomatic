@@ -113,7 +113,7 @@ namespace VendingMachine
                 body = Encoding.UTF8.GetString(bytes);
             }
 
-            string contentType = "text/plain";
+            string contentType = "application/json";
             if (input.Headers.TryGetValue("content-type", out var headerContentType) && !string.IsNullOrEmpty(headerContentType))
             {
                 contentType = headerContentType;

@@ -37,7 +37,7 @@ namespace VendingMachine
             return new APIGatewayHttpApiV2ProxyResponse
             {
                 StatusCode = 404,
-                Body = $"Route {input.RouteKey ?? "NULL" } Not Found",
+                Body = $"Route {input.RouteKey ?? "NULL"} Not Found",
             };
         }
 

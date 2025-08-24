@@ -12,6 +12,6 @@ resource "aws_dynamodb_table" "main" {
     type = "S"
   }
 
-  hash_key = "PK"
+  hash_key  = "PK"
   range_key = "SK"
 }

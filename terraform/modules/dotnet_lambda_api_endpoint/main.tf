@@ -1,8 +1,8 @@
 module "lambda" {
   source = "../dotnet_lambda"
 
-  name   = "VendingMachine"
-  prefix = var.prefix
+  name               = "VendingMachine"
+  prefix             = var.prefix
   dynamodb_table_arn = var.dynamodb_table_arn
 }
 

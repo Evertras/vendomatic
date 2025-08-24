@@ -1,0 +1,19 @@
+{
+  "runtime": "Net90", 
+  "documentGenerator": {
+    "fromDocument": {
+      "url": "../../../specs/api-v1.yml",
+      "output": null
+    }
+  },
+  "codeGenerators": {
+    "openApiToCSharpClient": {
+      "className": "Unused",
+      "namespace": "VendingMachine.Dtos",
+      "generateClientClasses": false,
+      "generateDtoTypes": true,
+      "jsonLibrary": "SystemTextJson",
+      "output": "Dtos/ApiDtos.cs"
+    }
+  }
+}

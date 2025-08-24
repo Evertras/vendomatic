@@ -2,11 +2,11 @@
 
 namespace VendingMachine.Models
 {
-    internal class Machine
+    public class Machine
     {
-        public string? PK { get; set; }
+        public string PK { get; set; } = string.Empty;
 
-        public string? SK { get; set; }
+        public string SK { get; set; } = string.Empty;
 
         public string? Name { get; set; }
 

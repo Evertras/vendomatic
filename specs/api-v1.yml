@@ -1,0 +1,74 @@
+openapi: 3.1.0
+info:
+  title: Vendomatic API
+  version: 0.0.1
+paths:
+  /machines:
+    get:
+      summary: Get all machines
+      operationId: getMachines
+      responses:
+        '200':
+          description: List of machines
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MachineListResponse'
+    post:
+      summary: Create a new machine
+      operationId: createMachine
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MachineCreateRequest'
+      responses:
+        '201':
+          description: Machine created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MachineCreateResponse'
+components:
+  schemas:
+    Machine:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+
+    MachineCreateRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+
+    MachineCreateResponse:
+      type: object
+      required:
+        - machine
+      properties:
+        machine:
+          $ref: '#/components/schemas/Machine'
+
+    MachineListResponse:
+      type: object
+      required:
+        - machines
+      properties:
+        machines:
+          type: array
+          items:
+            $ref: '#/components/schemas/Machine'

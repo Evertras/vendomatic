@@ -1,7 +1,9 @@
 ﻿using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
+using Amazon.Runtime.Internal;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -11,7 +13,7 @@ using System.Threading.Tasks;
 namespace VendingMachine
 {
     // There's probably a million better ways to do this, but for now...
-    internal class Server
+    public class Server
     {
         readonly IRepository _repository;
 
@@ -78,9 +80,7 @@ namespace VendingMachine
                 return new APIGatewayHttpApiV2ProxyResponse
                 {
                     StatusCode = (int)HttpStatusCode.InternalServerError,
-                    // Temporary for quick debugging
-                    Body = ex.Message,
-                    // Body = "Internal Server Error",
+                    Body = "Internal Server Error",
                 };
             }
         }
@@ -119,34 +119,33 @@ namespace VendingMachine
                 contentType = headerContentType;
             }
 
-            switch (contentType)
+            var ret = contentType switch
             {
-                case "application/json":
-                    return JsonSerializer.Deserialize<T>(body) ?? throw new ArgumentException("Failed to parse JSON body");
-                default:
-                    throw new NotSupportedException($"Unsupported Content-Type {contentType}");
+                "application/json" => JsonSerializer.Deserialize<T>(body) ?? throw new ArgumentException("Failed to parse JSON body"),
+                _ => throw new NotSupportedException($"Unsupported Content-Type {contentType}"),
+            };
+
+            var validationContext = new ValidationContext(ret, serviceProvider: null, items: null);
+            var validationResults = new List<ValidationResult>();
+            bool isValid = Validator.TryValidateObject(
+                ret,
+                validationContext,
+                validationResults,
+                validateAllProperties: true
+            );
+
+            if (!isValid)
+            {
+                var messages = validationResults.Select(r => r.ErrorMessage ?? "Unknown validation error");
+                throw new ArgumentException("Validation failed: " + string.Join("; ", messages));
             }
-        }
 
-        // Figure out a better place later, but for now just a cheaty spot for this
-        internal class CreateMachineRequest
-        {
-            public string? Name { get; init; }
-        }
-
-        internal class CreateMachineResponse
-        {
-            public string Id { get; init; } = string.Empty;
+            return ret;
         }
 
         internal async Task<APIGatewayHttpApiV2ProxyResponse> CreateMachine(APIGatewayHttpApiV2ProxyRequest input)
         {
-            var req = ParseBodyRequest<CreateMachineRequest>(input);
-
-            if (req == null || string.IsNullOrEmpty(req.Name))
-            {
-                throw new ArgumentException("Invalid request, must provide Name");
-            }
+            var req = ParseBodyRequest<Dtos.MachineCreateRequest>(input);
 
             var machine = new Models.Machine
             {
@@ -155,19 +154,20 @@ namespace VendingMachine
 
             var id = await _repository.AddMachineAsync(machine);
 
-            return JsonResponse(new CreateMachineResponse { Id = id });
-        }
-
-        internal class ListMachinesResponse
-        {
-            public List<Models.Machine> Machines { get; init; } = [];
+            return JsonResponse(new Dtos.MachineCreateResponse { Machine = { Id = id } });
         }
 
         internal async Task<APIGatewayHttpApiV2ProxyResponse> ListMachines(APIGatewayHttpApiV2ProxyRequest input)
         {
-            var machines = await _repository.ListMachinesAsync();
+            var machinesRaw = await _repository.ListMachinesAsync();
 
-            return JsonResponse(new ListMachinesResponse { Machines = machines });
+            var machines = machinesRaw.Select(m => new Dtos.Machine
+            {
+                Id = m.PK.Substring(4), // trim off MAC#
+                Name = m.Name,
+            }).ToList();
+
+            return JsonResponse(new Dtos.MachineListResponse { Machines = machines });
         }
     }
 }

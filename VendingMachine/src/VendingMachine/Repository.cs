@@ -11,7 +11,7 @@ using VendingMachine.Models;
 
 namespace VendingMachine
 {
-    internal interface IRepository
+    public interface IRepository
     {
         Task<string> AddMachineAsync(Machine machine);
         Task<List<Machine>> ListMachinesAsync();

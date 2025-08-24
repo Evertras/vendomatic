@@ -55,5 +55,5 @@ module "endpoint_vending_machine" {
   api_gateway_execution_arn = aws_apigatewayv2_api.vending_machine.execution_arn
   dynamodb_table_arn        = aws_dynamodb_table.main.arn
   method                    = "POST"
-  path                      = "/machine"
+  path                      = "/api/v1/machine"
 }

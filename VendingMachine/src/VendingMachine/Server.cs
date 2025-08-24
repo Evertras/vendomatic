@@ -31,10 +31,10 @@ namespace VendingMachine
                 // not the actual HTTP method and path
                 switch (input.RouteKey)
                 {
-                    case "POST /api/v1/machine":
+                    case "POST /api/v1/machines":
                         return await CreateMachine(input);
 
-                    case "GET /api/v1/machine":
+                    case "GET /api/v1/machines":
                         return await ListMachines(input);
 
                     default:
@@ -158,11 +158,16 @@ namespace VendingMachine
             return JsonResponse(new CreateMachineResponse { Id = id });
         }
 
+        internal class ListMachinesResponse
+        {
+            public List<Models.Machine> Machines { get; init; } = [];
+        }
+
         internal async Task<APIGatewayHttpApiV2ProxyResponse> ListMachines(APIGatewayHttpApiV2ProxyRequest input)
         {
             var machines = await _repository.ListMachinesAsync();
 
-            return JsonResponse(machines);
+            return JsonResponse(new ListMachinesResponse { Machines = machines });
         }
     }
 }

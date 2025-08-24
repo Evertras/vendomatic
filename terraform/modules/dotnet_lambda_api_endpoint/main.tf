@@ -20,7 +20,8 @@ resource "aws_apigatewayv2_integration" "api_integration" {
 }
 
 resource "aws_apigatewayv2_route" "api_route" {
+  for_each  = toset(var.route_keys)
   api_id    = var.api_gateway_id
-  route_key = "${var.method} ${var.path}"
+  route_key = each.value
   target    = "integrations/${aws_apigatewayv2_integration.api_integration.id}"
 }

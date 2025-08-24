@@ -24,10 +24,14 @@ namespace VendingMachine
             // TODO: better logging
             Console.WriteLine(JsonSerializer.Serialize(input));
 
+            // Dumbest router ever, but for now it works
             switch (input.RouteKey)
             {
                 case "POST /api/v1/machine":
                     return await CreateMachine(input);
+
+                case "GET /api/v1/machine":
+                    return await ListMachines(input);
             }
 
             return new APIGatewayHttpApiV2ProxyResponse

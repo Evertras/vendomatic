@@ -56,13 +56,13 @@ module "lambda_machines" {
 module "endpoint_vending_machine" {
   source = "./modules/dotnet_lambda_api_endpoint"
 
-  name                      = "VendingMachine"
-  prefix                    = local.prefix
   api_gateway_id            = aws_apigatewayv2_api.vending_machine.id
-  api_gateway_arn           = aws_apigatewayv2_api.vending_machine.arn
   api_gateway_execution_arn = aws_apigatewayv2_api.vending_machine.execution_arn
   lambda_invoke_arn         = module.lambda_machines.invoke_arn
   lambda_function_name      = module.lambda_machines.name
-  method                    = "POST"
-  path                      = "/api/v1/machine"
+
+  route_keys = [
+    "POST /api/v1/machine",
+    "GET /api/v1/machine",
+  ]
 }

@@ -39,10 +39,6 @@ resource "aws_apigatewayv2_stage" "prod" {
     throttling_burst_limit = 1
     throttling_rate_limit  = 1
   }
-
-  depends_on = [
-    aws_cloudwatch_log_group.apigw_prod_logs
-  ]
 }
 
 module "lambda_machines" {

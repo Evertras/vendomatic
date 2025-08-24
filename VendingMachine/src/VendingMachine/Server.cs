@@ -60,5 +60,22 @@ namespace VendingMachine
             };
             return response;
         }
+
+        internal async Task<APIGatewayHttpApiV2ProxyResponse> ListMachines(APIGatewayHttpApiV2ProxyRequest input)
+        {
+            var machines = await _repository.ListMachinesAsync();
+
+            var body = JsonSerializer.Serialize(machines);
+
+            return new APIGatewayHttpApiV2ProxyResponse
+            {
+                StatusCode = 200,
+                Body = body,
+                Headers = new Dictionary<string, string>
+                {
+                    { "Content-Type", "application/json" }
+                }
+            };
+        }
     }
 }

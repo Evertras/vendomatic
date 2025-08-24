@@ -23,6 +23,16 @@ variable "api_gateway_execution_arn" {
   type        = string
 }
 
+variable "lambda_invoke_arn" {
+  description = "The ARN to invoke the Lambda function using AWS_PROXY with 2.0 payload"
+  type        = string
+}
+
+variable "lambda_function_name" {
+  description = "The name of the Lambda function"
+  type        = string
+}
+
 variable "method" {
   description = "The HTTP method to use for the API Gateway integration"
   type        = string
@@ -31,11 +41,6 @@ variable "method" {
 
 variable "path" {
   description = "The path for the API Gateway integration, starting with a slash"
-  type        = string
-}
-
-variable "dynamodb_table_arn" {
-  description = "The ARN of the DynamoDB table to access"
   type        = string
 }
 

@@ -1,5 +1,5 @@
-variable "site_url" {
-  description = "The URL of the site"
+variable "site_domain" {
+  description = "The domain of the site"
   type        = string
-  default     = "https://vend.evertras.com"
+  default     = "vendomatic.evertras.com"
 }

@@ -14,6 +14,7 @@ namespace VendingMachine
     internal interface IRepository
     {
         Task AddMachineAsync(Machine machine);
+        Task<List<Machine>> ListMachinesAsync();
     }
 
     internal class Repository : IRepository
@@ -48,6 +49,26 @@ namespace VendingMachine
             var result = await _dynamodDB.PutItemAsync(createRequest);
 
             Console.WriteLine(JsonSerializer.Serialize(result));
+        }
+
+        public async Task<List<Machine>> ListMachinesAsync()
+        {
+            var scanRequest = new ScanRequest
+            {
+                TableName = _tableName,
+                FilterExpression = "begins_with(PK, :pkval)",
+                ExpressionAttributeValues = new Dictionary<string, AttributeValue>
+                {
+                    { ":pkval", new AttributeValue { S = "MAC#" } }
+                }
+            };
+            var result = await _dynamodDB.ScanAsync(scanRequest);
+            var machines = result.Items.Select(item =>
+            {
+                var json = Document.FromAttributeMap(item).ToJson();
+                return JsonSerializer.Deserialize<Machine>(json);
+            }).Where(m => m != null).ToList();
+            return machines!;
         }
     }
 }

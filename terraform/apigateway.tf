@@ -4,7 +4,7 @@ resource "aws_apigatewayv2_api" "vending_machine" {
   cors_configuration {
     allow_headers  = ["*"]
     allow_methods  = ["*"]
-    allow_origins  = [var.site_url]
+    allow_origins  = ["https://${var.site_domain}"]
     expose_headers = ["*"]
     max_age        = 3600
   }
@@ -45,6 +45,14 @@ resource "aws_apigatewayv2_stage" "prod" {
   ]
 }
 
+module "lambda_machines" {
+  source = "./modules/dotnet_lambda"
+
+  name               = "VendingMachine"
+  prefix             = local.prefix
+  dynamodb_table_arn = aws_dynamodb_table.main.arn
+}
+
 module "endpoint_vending_machine" {
   source = "./modules/dotnet_lambda_api_endpoint"
 
@@ -53,7 +61,8 @@ module "endpoint_vending_machine" {
   api_gateway_id            = aws_apigatewayv2_api.vending_machine.id
   api_gateway_arn           = aws_apigatewayv2_api.vending_machine.arn
   api_gateway_execution_arn = aws_apigatewayv2_api.vending_machine.execution_arn
-  dynamodb_table_arn        = aws_dynamodb_table.main.arn
+  lambda_invoke_arn         = module.lambda_machines.invoke_arn
+  lambda_function_name      = module.lambda_machines.name
   method                    = "POST"
   path                      = "/api/v1/machine"
 }

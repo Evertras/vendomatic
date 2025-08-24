@@ -1,4 +1,4 @@
 .PHONY: apply
 apply:
 	terraform init
-	terraform apply
+	terraform apply -auto-approve

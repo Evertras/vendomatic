@@ -3,6 +3,7 @@ using Amazon.Lambda.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -35,6 +36,13 @@ namespace VendingMachine
 
                     case "GET /api/v1/machine":
                         return await ListMachines(input);
+
+                    default:
+                        return new APIGatewayHttpApiV2ProxyResponse
+                        {
+                            StatusCode = 404,
+                            Body = $"Route {input.RouteKey ?? "NULL"} Not Found",
+                        };
                 }
             }
             catch (ArgumentException ex)
@@ -42,7 +50,7 @@ namespace VendingMachine
                 Console.WriteLine($"Argument exception: {ex}");
                 return new APIGatewayHttpApiV2ProxyResponse
                 {
-                    StatusCode = 400,
+                    StatusCode = (int)HttpStatusCode.BadRequest,
                     Body = ex.Message,
                 };
             }
@@ -51,7 +59,7 @@ namespace VendingMachine
                 Console.WriteLine($"Not supported exception: {ex}");
                 return new APIGatewayHttpApiV2ProxyResponse
                 {
-                    StatusCode = 415,
+                    StatusCode = (int)HttpStatusCode.UnsupportedMediaType,
                     Body = ex.Message,
                 };
             }
@@ -60,7 +68,7 @@ namespace VendingMachine
                 Console.WriteLine($"Json exception: {ex}");
                 return new APIGatewayHttpApiV2ProxyResponse
                 {
-                    StatusCode = 400,
+                    StatusCode = (int)HttpStatusCode.BadRequest,
                     Body = ex.Message,
                 };
             }
@@ -69,25 +77,19 @@ namespace VendingMachine
                 Console.WriteLine($"Unknown exception: {ex}");
                 return new APIGatewayHttpApiV2ProxyResponse
                 {
-                    StatusCode = 500,
+                    StatusCode = (int)HttpStatusCode.InternalServerError,
                     // Temporary for quick debugging
                     Body = ex.Message,
                     // Body = "Internal Server Error",
                 };
             }
-
-            return new APIGatewayHttpApiV2ProxyResponse
-            {
-                StatusCode = 404,
-                Body = $"Route {input.RouteKey ?? "NULL"} Not Found",
-            };
         }
 
-        internal static APIGatewayHttpApiV2ProxyResponse JsonResponse<T>(T obj, int statusCode = 200)
+        internal static APIGatewayHttpApiV2ProxyResponse JsonResponse<T>(T obj)
         {
             return new APIGatewayHttpApiV2ProxyResponse
             {
-                StatusCode = statusCode,
+                StatusCode = (int)HttpStatusCode.OK,
                 Body = JsonSerializer.Serialize(obj),
                 Headers = new Dictionary<string, string>
                 {

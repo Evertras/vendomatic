@@ -1,4 +1,5 @@
 ﻿using Amazon.Lambda.APIGatewayEvents;
+using Amazon.XRay.Recorder.Core;
 using System.ComponentModel.DataAnnotations;
 using System.Net;
 using System.Text;
@@ -18,11 +19,12 @@ namespace VendingMachine
 
         public async Task<APIGatewayHttpApiV2ProxyResponse> HandleRequest(APIGatewayHttpApiV2ProxyRequest input)
         {
-            // TODO: better logging
-            Console.WriteLine(JsonSerializer.Serialize(input));
+            AWSXRayRecorder.Instance.BeginSubsegment("Server " + input.RouteKey);
 
             try
             {
+                Console.WriteLine(input);
+
                 // Dumbest router ever, but for now it works... note this is keyed off AWS API Gateway integration entries,
                 // not the actual HTTP method and path
                 switch (input.RouteKey)
@@ -76,6 +78,10 @@ namespace VendingMachine
                     StatusCode = (int)HttpStatusCode.InternalServerError,
                     Body = "Internal Server Error",
                 };
+            }
+            finally
+            {
+                AWSXRayRecorder.Instance.EndSubsegment();
             }
         }
 

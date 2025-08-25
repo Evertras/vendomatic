@@ -1,7 +1,8 @@
 using Amazon.Lambda.Core;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.DynamoDBv2;
-using Amazon.DynamoDBv2.DataModel;
+using Amazon.XRay.Recorder.Core;
+using Amazon.XRay.Recorder.Handlers.AwsSdk;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.SystemTextJson.DefaultLambdaJsonSerializer))]
@@ -16,6 +17,8 @@ public class Function
 
     public Function()
     {
+        AWSSDKHandler.RegisterXRayForAllServices();
+
         var db = new AmazonDynamoDBClient();
         var tableName = Environment.GetEnvironmentVariable("EVERTRAS_TABLE_NAME") ?? "evertras-vendomatic-db";
         var repository = new Repository(db, tableName);
@@ -24,6 +27,16 @@ public class Function
     
     public async Task<APIGatewayHttpApiV2ProxyResponse> FunctionHandler(APIGatewayHttpApiV2ProxyRequest input)
     {
-        return await _server.HandleRequest(input);
+        AWSXRayRecorder.Instance.BeginSubsegment("Function");
+        AWSXRayRecorder.Instance.AddAnnotation("RouteKey", input.RouteKey ?? "NULL");
+
+        try
+        {
+            return await _server.HandleRequest(input);
+        }
+        finally
+        {
+            AWSXRayRecorder.Instance.EndSubsegment();
+        }
     }
 }

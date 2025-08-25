@@ -6,6 +6,9 @@ resource "aws_lambda_function" "lambda" {
   handler          = "VendingMachine::VendingMachine.Function::FunctionHandler"
   runtime          = "dotnet8"
   memory_size      = 256
+  tracing_config {
+    mode = "Active"
+  }
 
   depends_on = [aws_iam_role_policy_attachment.attach_log_policy]
 }

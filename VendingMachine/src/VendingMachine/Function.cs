@@ -3,10 +3,12 @@ using Amazon.Lambda.APIGatewayEvents;
 using Amazon.DynamoDBv2;
 using Amazon.XRay.Recorder.Core;
 using Amazon.XRay.Recorder.Handlers.AwsSdk;
+using System.Runtime.CompilerServices;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.SystemTextJson.DefaultLambdaJsonSerializer))]
 
+[assembly: InternalsVisibleTo("VendingMachine.Tests")]
 namespace VendingMachine;
 
 // Acts as an entry point for AWS to invoke the Lambda function. Only worry about

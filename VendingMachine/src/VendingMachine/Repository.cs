@@ -11,24 +11,14 @@ using VendingMachine.Models;
 
 namespace VendingMachine
 {
-    public interface IRepository
+    internal interface IRepository
     {
         Task<string> AddMachineAsync(Machine machine);
         Task<List<Machine>> ListMachinesAsync();
     }
 
-    internal class Repository : IRepository
+    internal class Repository(IAmazonDynamoDB db, string tableName) : IRepository
     {
-        private readonly IAmazonDynamoDB _dynamodDB;
-        private readonly string _tableName;
-
-        // Temporary
-        public Repository(IAmazonDynamoDB db, string tableName)
-        {
-            _dynamodDB = db;
-            _tableName = tableName;
-        }
-
         public async Task<string> AddMachineAsync(Machine machine)
         {
             var id = Guid.NewGuid().ToString();
@@ -41,13 +31,13 @@ namespace VendingMachine
 
             var createRequest = new PutItemRequest
             {
-                TableName = _tableName,
+                TableName = tableName,
                 Item = asAttrs,
             };
 
             Console.WriteLine(JsonSerializer.Serialize(machine));
 
-            var result = await _dynamodDB.PutItemAsync(createRequest);
+            var result = await db.PutItemAsync(createRequest);
 
             Console.WriteLine(JsonSerializer.Serialize(result));
 
@@ -58,14 +48,14 @@ namespace VendingMachine
         {
             var scanRequest = new ScanRequest
             {
-                TableName = _tableName,
+                TableName = tableName,
                 FilterExpression = "begins_with(PK, :pkval)",
                 ExpressionAttributeValues = new Dictionary<string, AttributeValue>
                 {
                     { ":pkval", new AttributeValue { S = "MAC#" } }
                 }
             };
-            var result = await _dynamodDB.ScanAsync(scanRequest);
+            var result = await db.ScanAsync(scanRequest);
             var machines = result.Items.Select(item =>
             {
                 var json = Document.FromAttributeMap(item).ToJson();

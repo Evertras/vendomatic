@@ -8,15 +8,8 @@ using System.Text.Json;
 namespace VendingMachine
 {
     // There's probably a million better ways to do this, but for now...
-    public class Server
+    internal class Server(IRepository repository)
     {
-        readonly IRepository _repository;
-
-        public Server(IRepository repository)
-        {
-            _repository = repository;
-        }
-
         public async Task<APIGatewayHttpApiV2ProxyResponse> HandleRequest(APIGatewayHttpApiV2ProxyRequest input)
         {
             AWSXRayRecorder.Instance.BeginSubsegment("Server " + input.RouteKey);
@@ -152,14 +145,14 @@ namespace VendingMachine
                 Name = req.Name,
             };
 
-            var id = await _repository.AddMachineAsync(machine);
+            var id = await repository.AddMachineAsync(machine);
 
             return JsonResponse(new Dtos.MachineCreateResponse { Machine = { Id = id } });
         }
 
         internal async Task<APIGatewayHttpApiV2ProxyResponse> ListMachines(APIGatewayHttpApiV2ProxyRequest input)
         {
-            var machinesRaw = await _repository.ListMachinesAsync();
+            var machinesRaw = await repository.ListMachinesAsync();
 
             var machines = machinesRaw.Select(m => new Dtos.Machine
             {

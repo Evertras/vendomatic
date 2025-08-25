@@ -10,10 +10,10 @@ using Amazon.DynamoDBv2;
 
 namespace VendingMachine.Tests;
 
-public class FunctionTest
+public class ApiV1Test
 {
     [Fact]
-    public async Task TestV1GetMachineListGetsMachines()
+    public async Task TestGetMachineListGetsMachines()
     {
         var mockAmazonDB = Substitute.For<IAmazonDynamoDB>();
 

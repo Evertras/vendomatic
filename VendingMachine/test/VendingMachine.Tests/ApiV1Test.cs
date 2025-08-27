@@ -46,7 +46,7 @@ public class ApiV1Test
                 ]
             });
 
-        var server = new Server(new Repository(mockAmazonDB,tableName));
+        var server = new Server(new Repository(mockAmazonDB, tableName));
 
         var res = await server.HandleRequest(new APIGatewayHttpApiV2ProxyRequest
         {
@@ -75,7 +75,7 @@ public class ApiV1Test
         var mockAmazonDB = Substitute.For<IAmazonDynamoDB>();
         mockAmazonDB.PutItemAsync(Arg.Any<PutItemRequest>(), Arg.Any<CancellationToken>())
             .Returns(new PutItemResponse());
-        var server = new Server(new Repository(mockAmazonDB,tableName));
+        var server = new Server(new Repository(mockAmazonDB, tableName));
         var req = new MachineCreateRequest
         {
             Name = "New Machine",
@@ -93,7 +93,8 @@ public class ApiV1Test
             }
         });
         var resObj = GetResponseIsOK<MachineCreateResponse>(res);
-        Assert.False(string.IsNullOrEmpty(resObj.Machine.Id));
+        resObj.Machine.Should().NotBeNull();
+        resObj.Machine.Id.Should().NotBeNullOrEmpty();
     }
 
     [Fact]

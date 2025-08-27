@@ -6,27 +6,40 @@ using Amazon.DynamoDBv2;
 using Amazon.Lambda.APIGatewayEvents;
 using System.Net;
 using Amazon.DynamoDBv2.Model;
+using FluentAssertions;
 
 namespace VendingMachine.Tests;
 
 public class ApiV1Test
 {
+    internal static T GetResponseIsOK<T>(APIGatewayHttpApiV2ProxyResponse res)
+    {
+        res.StatusCode.Should().Be((int)HttpStatusCode.OK);
+        res.Body.Should().NotBeNull();
+        res.Headers.Should().ContainKey("Content-Type");
+        res.Headers["Content-Type"].Should().Be("application/json");
+
+        var resObj = JsonSerializer.Deserialize<T>(res.Body!);
+        resObj.Should().NotBeNull();
+        return resObj;
+    }
+
     [Fact]
     public async Task TestGetMachineListGetsMachines()
     {
         var mockAmazonDB = Substitute.For<IAmazonDynamoDB>();
 
-        mockAmazonDB.ScanAsync(Arg.Any<Amazon.DynamoDBv2.Model.ScanRequest>(), Arg.Any<CancellationToken>())
-            .Returns(new Amazon.DynamoDBv2.Model.ScanResponse
+        mockAmazonDB.ScanAsync(Arg.Any<ScanRequest>(), Arg.Any<CancellationToken>())
+            .Returns(new ScanResponse
             {
                 Items =
                 [
                     new() {
-                        { "PK", new Amazon.DynamoDBv2.Model.AttributeValue { S = "MAC#1234" } },
-                        { "SK", new Amazon.DynamoDBv2.Model.AttributeValue { S = "MAC#1234" } },
-                        { "Name", new Amazon.DynamoDBv2.Model.AttributeValue { S = "Test Machine" } },
-                        { "ExtraField", new Amazon.DynamoDBv2.Model.AttributeValue { S = "Shouldn't bother anyone" } },
-                        { "CreatedAt", new Amazon.DynamoDBv2.Model.AttributeValue { S = DateTime.UtcNow.ToString("o") } },
+                        { "PK", new AttributeValue { S = "MAC#1234" } },
+                        { "SK", new AttributeValue { S = "MAC#1234" } },
+                        { "Name", new AttributeValue { S = "Test Machine" } },
+                        { "ExtraField", new AttributeValue { S = "Shouldn't bother anyone" } },
+                        { "CreatedAt", new AttributeValue { S = DateTime.UtcNow.ToString("o") } },
                     }
                 ]
             });
@@ -38,7 +51,7 @@ public class ApiV1Test
             RouteKey = "GET /api/v1/machines",
         });
 
-        var expectedBody = JsonSerializer.Serialize(new MachineListResponse
+        var expectedResponse = new MachineListResponse
         {
             Machines =
             [
@@ -48,21 +61,18 @@ public class ApiV1Test
                     Name = "Test Machine",
                 }
             ]
-        });
+        };
 
-        Assert.Equal(200, res.StatusCode);
-        Assert.NotNull(res.Body);
-        Assert.Equal(expectedBody, res.Body);
-        Assert.True(res.Headers.ContainsKey("Content-Type"));
-        Assert.Equal("application/json", res.Headers["Content-Type"]);
+        var resObj = GetResponseIsOK<MachineListResponse>(res);
+        resObj.Should().BeEquivalentTo(expectedResponse);
     }
 
     [Fact]
     public async Task TestCreateMachineCreatesMachine()
     {
         var mockAmazonDB = Substitute.For<IAmazonDynamoDB>();
-        mockAmazonDB.PutItemAsync(Arg.Any<Amazon.DynamoDBv2.Model.PutItemRequest>(), Arg.Any<CancellationToken>())
-            .Returns(new Amazon.DynamoDBv2.Model.PutItemResponse());
+        mockAmazonDB.PutItemAsync(Arg.Any<PutItemRequest>(), Arg.Any<CancellationToken>())
+            .Returns(new PutItemResponse());
         var server = new Server(new Repository(mockAmazonDB, "test-table"));
         var req = new MachineCreateRequest
         {
@@ -80,12 +90,7 @@ public class ApiV1Test
                 { "content-type", "application/json" }
             }
         });
-        Assert.Equal(200, res.StatusCode);
-        Assert.NotNull(res.Body);
-        Assert.True(res.Headers.ContainsKey("Content-Type"));
-        Assert.Equal("application/json", res.Headers["Content-Type"]);
-        var resObj = JsonSerializer.Deserialize<MachineCreateResponse>(res.Body!);
-        Assert.NotNull(resObj);
+        var resObj = GetResponseIsOK<MachineCreateResponse>(res);
         Assert.False(string.IsNullOrEmpty(resObj.Machine.Id));
     }
 
@@ -108,7 +113,9 @@ public class ApiV1Test
             }
         });
 
-        Assert.Equal(200, res.StatusCode);
+        var resObj = GetResponseIsOK<MachineDeleteResponse>(res);
+
+        resObj.Success.Should().BeTrue();
 
         var validator = Arg.Is<DeleteItemRequest>(r => r.TableName == tableName && r.Key["PK"].S == $"MAC#{machineId}");
         await mockAmazonDB.Received().DeleteItemAsync(validator, Arg.Any<CancellationToken>());

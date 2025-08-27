@@ -60,5 +60,6 @@ module "endpoint_vending_machine" {
   route_keys = [
     "POST /api/v1/machines",
     "GET /api/v1/machines",
+    "DELETE /api/v1/machines/{id}",
   ]
 }

@@ -4,6 +4,8 @@ using System.Text.Json;
 using VendingMachine.Dtos;
 using Amazon.DynamoDBv2;
 using Amazon.Lambda.APIGatewayEvents;
+using System.Net;
+using Amazon.DynamoDBv2.Model;
 
 namespace VendingMachine.Tests;
 
@@ -85,5 +87,30 @@ public class ApiV1Test
         var resObj = JsonSerializer.Deserialize<MachineCreateResponse>(res.Body!);
         Assert.NotNull(resObj);
         Assert.False(string.IsNullOrEmpty(resObj.Machine.Id));
+    }
+
+    [Fact]
+    public async Task TestDeleteMachine()
+    {
+        var mockAmazonDB = Substitute.For<IAmazonDynamoDB>();
+        const string tableName = "test-table";
+        mockAmazonDB.DeleteItemAsync(Arg.Any<DeleteItemRequest>(), Arg.Any<CancellationToken>())
+            .Returns(new DeleteItemResponse());
+
+        var server = new Server(new Repository(mockAmazonDB, tableName));
+        var machineId = "1234";
+        var res = await server.HandleRequest(new APIGatewayHttpApiV2ProxyRequest
+        {
+            RouteKey = "DELETE /api/v1/machines/{id}",
+            PathParameters = new Dictionary<string, string>
+            {
+                { "id", machineId }
+            }
+        });
+
+        Assert.Equal(200, res.StatusCode);
+
+        var validator = Arg.Is<DeleteItemRequest>(r => r.TableName == tableName && r.Key["PK"].S == $"MAC#{machineId}");
+        await mockAmazonDB.Received().DeleteItemAsync(validator, Arg.Any<CancellationToken>());
     }
 }

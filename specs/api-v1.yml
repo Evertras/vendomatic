@@ -30,6 +30,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MachineCreateResponse'
+  /machines/{id}:
+    delete:
+      summary: Delete a machine
+      operationId: deleteMachine
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The ID of the machine to delete
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Machine deleted
 components:
   schemas:
     Machine:
@@ -72,3 +86,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Machine'
+
+    MachineDeleteResponse:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean

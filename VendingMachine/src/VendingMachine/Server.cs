@@ -28,6 +28,9 @@ namespace VendingMachine
                     case "GET /api/v1/machines":
                         return await ListMachines(input);
 
+                    case "DELETE /api/v1/machines/{id}":
+                        return await DeleteMachine(input);
+
                     default:
                         return new APIGatewayHttpApiV2ProxyResponse
                         {
@@ -161,6 +164,20 @@ namespace VendingMachine
             }).ToList();
 
             return JsonResponse(new Dtos.MachineListResponse { Machines = machines });
+        }
+
+        internal async Task<APIGatewayHttpApiV2ProxyResponse> DeleteMachine(APIGatewayHttpApiV2ProxyRequest input)
+        {
+            var id = input.PathParameters["id"];
+
+            if (string.IsNullOrEmpty(id))
+            {
+                throw new ArgumentException("id is required");
+            }
+
+            await repository.DeleteMachineAsync(id);
+
+            return JsonResponse(new Dtos.MachineDeleteResponse { Success = true });
         }
     }
 }

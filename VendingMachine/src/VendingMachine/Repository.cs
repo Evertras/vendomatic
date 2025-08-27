@@ -15,6 +15,7 @@ namespace VendingMachine
     {
         Task<string> AddMachineAsync(Machine machine);
         Task<List<Machine>> ListMachinesAsync();
+        Task DeleteMachineAsync(string id);
     }
 
     internal class Repository(IAmazonDynamoDB db, string tableName) : IRepository
@@ -62,6 +63,23 @@ namespace VendingMachine
                 return JsonSerializer.Deserialize<Machine>(json);
             }).Where(m => m != null).ToList();
             return machines!;
+        }
+
+        public async Task DeleteMachineAsync(string id)
+        {
+            var pk = "MAC#" + id;
+            var deleteRequest = new DeleteItemRequest
+            {
+                TableName = tableName,
+                Key = new Dictionary<string, AttributeValue>
+                {
+                    { "PK", new AttributeValue { S = pk } },
+                    { "SK", new AttributeValue { S = pk } }
+                }
+            };
+
+            var result = await db.DeleteItemAsync(deleteRequest);
+            Console.WriteLine(JsonSerializer.Serialize(result));
         }
     }
 }

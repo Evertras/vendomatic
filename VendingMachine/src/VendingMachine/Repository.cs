@@ -16,6 +16,7 @@ namespace VendingMachine
         Task<string> AddMachineAsync(Machine machine);
         Task<List<Machine>> ListMachinesAsync();
         Task DeleteMachineAsync(string id);
+        Task<Machine?> GetMachineAsync(string id);
     }
 
     internal class Repository(IAmazonDynamoDB db, string tableName) : IRepository
@@ -80,6 +81,57 @@ namespace VendingMachine
 
             var result = await db.DeleteItemAsync(deleteRequest);
             Console.WriteLine(JsonSerializer.Serialize(result));
+        }
+
+        public async Task<Machine?> GetMachineAsync(string id)
+        {
+            var machinePK = "MAC#" + id;
+            var getMachineRequest = new GetItemRequest
+            {
+                TableName = tableName,
+                Key = new Dictionary<string, AttributeValue>
+                {
+                    { "PK", new AttributeValue { S = machinePK } },
+                    { "SK", new AttributeValue { S = machinePK } }
+                }
+            };
+            var machineAsync = db.GetItemAsync(getMachineRequest);
+
+            var inventoryPK = "INV#" + id;
+            var productScanRequest = new ScanRequest
+            {
+                TableName = tableName,
+                FilterExpression = "PK = :pkval AND begins_with(SK, :skval)",
+                ExpressionAttributeValues = new Dictionary<string, AttributeValue>
+                {
+                    { ":pkval", new AttributeValue { S = inventoryPK } },
+                    { ":skval", new AttributeValue { S = "PROD#" } },
+                }
+            };
+
+            var inventoryAsync = db.ScanAsync(productScanRequest);
+
+            var machineResult = await machineAsync;
+
+            if (machineResult.Item == null || machineResult.Item.Count == 0)
+            {
+                return null;
+            }
+
+            var productScanResult = await inventoryAsync;
+
+            return new Machine()
+            {
+                PK = machineResult.Item["PK"].S!,
+                SK = machineResult.Item["SK"].S!,
+                Name = machineResult.Item.TryGetValue("Name", out var nameAttr) ? nameAttr.S : null,
+                CreatedAt = machineResult.Item.TryGetValue("CreatedAt", out var createdAtAttr) && DateTime.TryParse(createdAtAttr.S, out var createdAt) ? createdAt : null,
+                Inventory = [.. productScanResult.Items.Select(i => new MachineInventoryEntry
+                {
+                    Name = i.TryGetValue("Name", out var itemNameAttr) ? itemNameAttr.S ?? string.Empty : string.Empty,
+                    CostPennies = i.TryGetValue("CostPennies", out var costAttr) && int.TryParse(costAttr.N, out var cost) ? cost : 0,
+                })],
+            };
         }
     }
 }

@@ -7,6 +7,7 @@ using Amazon.Lambda.APIGatewayEvents;
 using System.Net;
 using Amazon.DynamoDBv2.Model;
 using FluentAssertions;
+using Amazon.Runtime.Internal.Util;
 
 namespace VendingMachine.Tests;
 
@@ -121,5 +122,76 @@ public class ApiV1Test
 
         var validator = Arg.Is<DeleteItemRequest>(r => r.TableName == tableName && r.Key["PK"].S == $"MAC#{machineId}");
         await mockAmazonDB.Received().DeleteItemAsync(validator, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task TestGetMachineDetails()
+    {
+        var mockAmazonDB = Substitute.For<IAmazonDynamoDB>();
+        mockAmazonDB.GetItemAsync(Arg.Any<GetItemRequest>(), Arg.Any<CancellationToken>())
+            .Returns(new GetItemResponse
+            {
+                Item = new Dictionary<string, AttributeValue>
+                {
+                    { "PK", new AttributeValue { S = "MAC#1234" } },
+                    { "SK", new AttributeValue { S = "MAC#1234" } },
+                    { "Name", new AttributeValue { S = "Test Machine" } },
+                    { "CreatedAt", new AttributeValue { S = DateTime.UtcNow.ToString("o") } },
+                }
+            });
+        mockAmazonDB.ScanAsync(Arg.Any<ScanRequest>(), Arg.Any<CancellationToken>())
+            .Returns(new ScanResponse
+            {
+                Items =
+                [
+                    new() {
+                        { "PK", new AttributeValue { S = "INV#1234" } },
+                        { "SK", new AttributeValue { S = "ITEM#Soda" } },
+                        { "Name", new AttributeValue { S = "Soda" } },
+                        { "CostPennies", new AttributeValue { N = "150" } },
+                    },
+                    new() {
+                        { "PK", new AttributeValue { S = "INV#1234" } },
+                        { "SK", new AttributeValue { S = "ITEM#Chips" } },
+                        { "Name", new AttributeValue { S = "Chips" } },
+                        { "CostPennies", new AttributeValue { N = "100" } },
+                    }
+                ]
+            });
+
+        var server = new Server(new Repository(mockAmazonDB, tableName));
+        var res = await server.HandleRequest(new APIGatewayHttpApiV2ProxyRequest
+        {
+            RouteKey = "GET /api/v1/machines/{id}",
+            PathParameters = new Dictionary<string, string>
+            {
+                { "id", "1234" }
+            }
+        });
+        var resObj = GetResponseIsOK<MachineDetailsResponse>(res);
+
+        var expectedResponse = new MachineDetailsResponse
+        {
+            Machine = new MachineDetails
+            {
+                Id = "1234",
+                Name = "Test Machine",
+                Inventory =
+                [
+                    new MachineInventoryEntry
+                    {
+                        Name = "Soda",
+                        CostPennies = 150,
+                    },
+                    new MachineInventoryEntry
+                    {
+                        Name = "Chips",
+                        CostPennies = 100,
+                    }
+                ]
+            }
+        };
+
+        resObj.Should().BeEquivalentTo(expectedResponse);
     }
 }

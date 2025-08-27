@@ -58,8 +58,9 @@ module "endpoint_vending_machine" {
   lambda_function_name      = module.lambda_machines.name
 
   route_keys = [
-    "POST /api/v1/machines",
     "GET /api/v1/machines",
+    "POST /api/v1/machines",
+    "GET /api/v1/machines/{id}",
     "DELETE /api/v1/machines/{id}",
   ]
 }

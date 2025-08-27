@@ -31,6 +31,25 @@ paths:
               schema:
                 $ref: '#/components/schemas/MachineCreateResponse'
   /machines/{id}:
+    get:
+      summary: Get a machine by ID
+      operationId: getMachineById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The ID of the machine to retrieve
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Machine details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MachineDetails'
+        '404':
+          description: Machine not found
     delete:
       summary: Delete a machine
       operationId: deleteMachine
@@ -58,6 +77,50 @@ components:
           type: string
           minLength: 1
           maxLength: 100
+
+    MachineInventoryEntry:
+      type: object
+      required:
+        - name
+        - quantity
+        - costPennies
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        quantity:
+          type: integer
+          minimum: 0
+        costPennies:
+          type: integer
+          minimum: 0
+
+    MachineDetails:
+      type: object
+      required:
+        - id
+        - name
+        - inventory
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        inventory:
+          type: array
+          items:
+            $ref: '#/components/schemas/MachineInventoryEntry'
+
+    MachineDetailsResponse:
+      type: object
+      required:
+        - machine
+      properties:
+        machine:
+          $ref: '#/components/schemas/MachineDetails'
 
     MachineCreateRequest:
       type: object

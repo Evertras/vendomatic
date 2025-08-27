@@ -28,8 +28,12 @@ namespace VendingMachine
                     case "GET /api/v1/machines":
                         return await ListMachines(input);
 
+                    case "GET /api/v1/machines/{id}":
+                        return await GetMachineDetails(input);
+
                     case "DELETE /api/v1/machines/{id}":
                         return await DeleteMachine(input);
+
 
                     default:
                         return new APIGatewayHttpApiV2ProxyResponse
@@ -178,6 +182,43 @@ namespace VendingMachine
             await repository.DeleteMachineAsync(id);
 
             return JsonResponse(new Dtos.MachineDeleteResponse { Success = true });
+        }
+
+        internal async Task<APIGatewayHttpApiV2ProxyResponse> GetMachineDetails(APIGatewayHttpApiV2ProxyRequest input)
+        {
+            var id = input.PathParameters["id"];
+
+            if (string.IsNullOrEmpty(id))
+            {
+                throw new ArgumentException("id is required");
+            }
+
+            var machine = await repository.GetMachineAsync(id);
+
+            if (machine == null)
+            {
+                return new APIGatewayHttpApiV2ProxyResponse
+                {
+                    StatusCode = (int)HttpStatusCode.NotFound,
+                    Body = "Machine not found",
+                };
+            }
+
+            var dto = new Dtos.MachineDetailsResponse
+            {
+                Machine = new Dtos.MachineDetails
+                {
+                    Id = machine.PK.Substring(4), // trim off MAC#
+                    Name = machine.Name,
+                    Inventory = [.. machine.Inventory.Select(i => new Dtos.MachineInventoryEntry
+                    {
+                        Name = i.Name,
+                        CostPennies = i.CostPennies,
+                    })],
+                }
+            };
+
+            return JsonResponse(dto);
         }
     }
 }

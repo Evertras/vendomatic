@@ -11,5 +11,14 @@ namespace VendingMachine.Models
         public string? Name { get; set; }
 
         public DateTime? CreatedAt { get; set; }
+
+        public List<MachineInventoryEntry> Inventory { get; set; } = [];
+    }
+
+    public class MachineInventoryEntry
+    {
+        public string Name { get; set; } = string.Empty;
+
+        public int CostPennies { get; set; } = 0;
     }
 }

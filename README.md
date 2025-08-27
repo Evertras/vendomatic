@@ -8,9 +8,9 @@ SQL is expensive in AWS so I'm cheaping out and using DynamoDB by default.
 
 ### Schema
 
-| Entity    | PK              | SK               |
-| --------- | --------------- | ---------------- |
-| Machine   | MAC#{id}        | MAC#{id}         |
-| Inventory | INV#{MachineID} | PROD#{ProductID} |
+| Entity    | PK              | SK               | Attributes |
+| --------- | --------------- | ---------------- | ---------- |
+| Machine   | MAC#{id}        | MAC#{id}         | Name (S)   |
+| Inventory | INV#{MachineID} | PROD#{ProductID} | Name (S), Quantity(N), CostPennies (N) |
 
 Purposefully don't query across machines; they're supposed to be self-contained and isolated, these are just representations.

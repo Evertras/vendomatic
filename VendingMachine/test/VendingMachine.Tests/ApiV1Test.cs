@@ -12,6 +12,8 @@ namespace VendingMachine.Tests;
 
 public class ApiV1Test
 {
+    const string tableName = "test-table";
+
     internal static T GetResponseIsOK<T>(APIGatewayHttpApiV2ProxyResponse res)
     {
         res.StatusCode.Should().Be((int)HttpStatusCode.OK);
@@ -44,7 +46,7 @@ public class ApiV1Test
                 ]
             });
 
-        var server = new Server(new Repository(mockAmazonDB, "test-table"));
+        var server = new Server(new Repository(mockAmazonDB,tableName));
 
         var res = await server.HandleRequest(new APIGatewayHttpApiV2ProxyRequest
         {
@@ -73,7 +75,7 @@ public class ApiV1Test
         var mockAmazonDB = Substitute.For<IAmazonDynamoDB>();
         mockAmazonDB.PutItemAsync(Arg.Any<PutItemRequest>(), Arg.Any<CancellationToken>())
             .Returns(new PutItemResponse());
-        var server = new Server(new Repository(mockAmazonDB, "test-table"));
+        var server = new Server(new Repository(mockAmazonDB,tableName));
         var req = new MachineCreateRequest
         {
             Name = "New Machine",
@@ -98,7 +100,6 @@ public class ApiV1Test
     public async Task TestDeleteMachine()
     {
         var mockAmazonDB = Substitute.For<IAmazonDynamoDB>();
-        const string tableName = "test-table";
         mockAmazonDB.DeleteItemAsync(Arg.Any<DeleteItemRequest>(), Arg.Any<CancellationToken>())
             .Returns(new DeleteItemResponse());
 

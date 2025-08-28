@@ -13,8 +13,6 @@ namespace VendingMachine
     {
         public async Task<APIGatewayHttpApiV2ProxyResponse> HandleRequest(APIGatewayHttpApiV2ProxyRequest input)
         {
-            AWSXRayRecorder.Instance.BeginSubsegment("Server " + input.RouteKey);
-
             try
             {
                 Console.WriteLine(input);
@@ -61,10 +59,6 @@ namespace VendingMachine
             {
                 Console.WriteLine($"Unknown exception: {ex}");
                 return JsonResponse(new GenericErrorResponse { Error = "Internal server error" }, HttpStatusCode.InternalServerError);
-            }
-            finally
-            {
-                AWSXRayRecorder.Instance.EndSubsegment();
             }
         }
 

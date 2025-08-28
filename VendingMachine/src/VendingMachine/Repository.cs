@@ -48,16 +48,16 @@ namespace VendingMachine
 
         public async Task<List<Machine>> ListMachinesAsync()
         {
-            var queryRequest = new QueryRequest
+            var scanRequest = new ScanRequest
             {
                 TableName = tableName,
-                KeyConditionExpression = "begins_with(PK, :pkval)",
+                FilterExpression = "begins_with(PK, :pkval)",
                 ExpressionAttributeValues = new Dictionary<string, AttributeValue>
                 {
                     { ":pkval", new AttributeValue { S = "MAC#" } }
                 }
             };
-            var result = await db.QueryAsync(queryRequest);
+            var result = await db.ScanAsync(scanRequest);
             var machines = result.Items.Select(item =>
             {
                 var json = Document.FromAttributeMap(item).ToJson();

@@ -32,8 +32,8 @@ public class ApiV1Test
     {
         var mockAmazonDB = Substitute.For<IAmazonDynamoDB>();
 
-        mockAmazonDB.QueryAsync(Arg.Any<QueryRequest>(), Arg.Any<CancellationToken>())
-            .Returns(new QueryResponse
+        mockAmazonDB.ScanAsync(Arg.Any<ScanRequest>(), Arg.Any<CancellationToken>())
+            .Returns(new ScanResponse
             {
                 Items =
                 [

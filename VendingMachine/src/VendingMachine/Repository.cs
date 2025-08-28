@@ -68,14 +68,67 @@ namespace VendingMachine
 
         public async Task DeleteMachineAsync(string id)
         {
-            var pk = "MAC#" + id;
+            // Get all inventory items remaining
+            var inventoryQuery = new QueryRequest
+            {
+                TableName = tableName,
+                KeyConditionExpression = "PK = :pkval AND begins_with(SK, :skval)",
+                ExpressionAttributeValues = new Dictionary<string, AttributeValue>
+                {
+                    { ":pkval", new AttributeValue { S = $"INV#{id}" } },
+                    { ":skval", new AttributeValue { S = "PROD#" } }
+                }
+            };
+
+            var inventoryResult = await db.QueryAsync(inventoryQuery);
+
+            // Delete in batches
+            var requestItems = new List<WriteRequest>();
+            foreach (var item in inventoryResult.Items)
+            {
+                var invDeleteRequest = new WriteRequest
+                {
+                    DeleteRequest = {
+                        Key = new Dictionary<string, AttributeValue>
+                        {
+                            { "PK", item["PK"] },
+                            { "SK", item["SK"] }
+                        }
+                    }
+                };
+                requestItems.Add(invDeleteRequest);
+
+                if (requestItems.Count == 25)
+                {
+                    var batchRequest = new BatchWriteItemRequest
+                    {
+                        RequestItems = new Dictionary<string, List<WriteRequest>>
+                        {
+                            { tableName, requestItems }
+                        }
+                    };
+                    var batchResult = await db.BatchWriteItemAsync(batchRequest);
+                    Console.WriteLine(JsonSerializer.Serialize(batchResult));
+
+                    // For now don't retry here, just fail
+                    if (batchResult.UnprocessedItems != null && batchResult.UnprocessedItems.Count > 0)
+                    {
+                        throw new Exception("Failed to delete all inventory items");
+                    }
+                    requestItems.Clear();
+                }
+            }
+
+            // Delete the machine itself only after inventory items are successfully deleted,
+            // because if any fail then we might have some orphaned inventory hanging around.
+            var machinePk = "MAC#" + id;
             var deleteRequest = new DeleteItemRequest
             {
                 TableName = tableName,
                 Key = new Dictionary<string, AttributeValue>
                 {
-                    { "PK", new AttributeValue { S = pk } },
-                    { "SK", new AttributeValue { S = pk } }
+                    { "PK", new AttributeValue { S = machinePk } },
+                    { "SK", new AttributeValue { S = machinePk } }
                 }
             };
 
@@ -98,7 +151,8 @@ namespace VendingMachine
 
             var machineAsync = db.GetItemAsync(getMachineRequest);
 
-            var inventoryAsync = db.QueryAsync(new QueryRequest{
+            var inventoryAsync = db.QueryAsync(new QueryRequest
+            {
                 TableName = tableName,
                 KeyConditionExpression = "PK = :pkval AND begins_with(SK, :skval)",
                 ExpressionAttributeValues = new Dictionary<string, AttributeValue>

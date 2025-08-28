@@ -102,8 +102,13 @@ public class ApiV1Test
     public async Task TestDeleteMachine()
     {
         var mockAmazonDB = Substitute.For<IAmazonDynamoDB>();
+        // TODO: Mock out Query to return inventory later
+        mockAmazonDB.QueryAsync(Arg.Any<QueryRequest>(), Arg.Any<CancellationToken>())
+            .Returns(new QueryResponse() { Items = [] });
         mockAmazonDB.DeleteItemAsync(Arg.Any<DeleteItemRequest>(), Arg.Any<CancellationToken>())
             .Returns(new DeleteItemResponse());
+        mockAmazonDB.BatchWriteItemAsync(Arg.Any<BatchWriteItemRequest>(), Arg.Any<CancellationToken>())
+            .Returns(new BatchWriteItemResponse());
 
         var server = new Server(new Repository(mockAmazonDB, tableName));
         var machineId = "1234";
@@ -122,6 +127,7 @@ public class ApiV1Test
 
         var validator = Arg.Is<DeleteItemRequest>(r => r.TableName == tableName && r.Key["PK"].S == $"MAC#{machineId}");
         await mockAmazonDB.Received().DeleteItemAsync(validator, Arg.Any<CancellationToken>());
+        // TODO: Add checks for batch write deletes later
     }
 
     [Fact]

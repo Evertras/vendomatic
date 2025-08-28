@@ -50,6 +50,10 @@ paths:
                 $ref: '#/components/schemas/MachineDetails'
         '404':
           description: Machine not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericErrorResponse'
     delete:
       summary: Delete a machine
       operationId: deleteMachine
@@ -157,3 +161,11 @@ components:
       properties:
         success:
           type: boolean
+
+    GenericErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string

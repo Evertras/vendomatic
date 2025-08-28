@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using VendingMachine.Dtos;
 
 namespace VendingMachine
 {
@@ -36,48 +37,30 @@ namespace VendingMachine
 
 
                     default:
-                        return new APIGatewayHttpApiV2ProxyResponse
-                        {
-                            StatusCode = 404,
-                            Body = $"Route {input.RouteKey ?? "NULL"} Not Found",
-                        };
+                        return JsonResponse(
+                            new GenericErrorResponse { Error = $"Route {input.RouteKey ?? "NULL"} Not Found" },
+                            HttpStatusCode.NotFound);
                 }
             }
             catch (ArgumentException ex)
             {
                 Console.WriteLine($"Argument exception: {ex}");
-                return new APIGatewayHttpApiV2ProxyResponse
-                {
-                    StatusCode = (int)HttpStatusCode.BadRequest,
-                    Body = ex.Message,
-                };
+                return JsonResponse(new GenericErrorResponse { Error = ex.Message }, HttpStatusCode.BadRequest);
             }
             catch (NotSupportedException ex)
             {
                 Console.WriteLine($"Not supported exception: {ex}");
-                return new APIGatewayHttpApiV2ProxyResponse
-                {
-                    StatusCode = (int)HttpStatusCode.UnsupportedMediaType,
-                    Body = ex.Message,
-                };
+                return JsonResponse(new GenericErrorResponse { Error = ex.Message }, HttpStatusCode.UnsupportedMediaType);
             }
             catch (JsonException ex)
             {
                 Console.WriteLine($"Json exception: {ex}");
-                return new APIGatewayHttpApiV2ProxyResponse
-                {
-                    StatusCode = (int)HttpStatusCode.BadRequest,
-                    Body = ex.Message,
-                };
+                return JsonResponse(new GenericErrorResponse { Error = ex.Message }, HttpStatusCode.BadRequest);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Unknown exception: {ex}");
-                return new APIGatewayHttpApiV2ProxyResponse
-                {
-                    StatusCode = (int)HttpStatusCode.InternalServerError,
-                    Body = "Internal Server Error",
-                };
+                return JsonResponse(new GenericErrorResponse { Error = "Internal server error" }, HttpStatusCode.InternalServerError);
             }
             finally
             {
@@ -85,11 +68,11 @@ namespace VendingMachine
             }
         }
 
-        internal static APIGatewayHttpApiV2ProxyResponse JsonResponse<T>(T obj)
+        internal static APIGatewayHttpApiV2ProxyResponse JsonResponse<T>(T obj, HttpStatusCode status = HttpStatusCode.OK)
         {
             return new APIGatewayHttpApiV2ProxyResponse
             {
-                StatusCode = (int)HttpStatusCode.OK,
+                StatusCode = (int)status,
                 Body = JsonSerializer.Serialize(obj),
                 Headers = new Dictionary<string, string>
                 {
@@ -145,7 +128,7 @@ namespace VendingMachine
 
         internal async Task<APIGatewayHttpApiV2ProxyResponse> CreateMachine(APIGatewayHttpApiV2ProxyRequest input)
         {
-            var req = ParseBodyRequest<Dtos.MachineCreateRequest>(input);
+            var req = ParseBodyRequest<MachineCreateRequest>(input);
 
             var machine = new Models.Machine
             {
@@ -154,20 +137,20 @@ namespace VendingMachine
 
             var id = await repository.AddMachineAsync(machine);
 
-            return JsonResponse(new Dtos.MachineCreateResponse { Machine = { Id = id } });
+            return JsonResponse(new MachineCreateResponse { Machine = { Id = id } });
         }
 
         internal async Task<APIGatewayHttpApiV2ProxyResponse> ListMachines(APIGatewayHttpApiV2ProxyRequest input)
         {
             var machinesRaw = await repository.ListMachinesAsync();
 
-            var machines = machinesRaw.Select(m => new Dtos.Machine
+            var machines = machinesRaw.Select(m => new Machine
             {
                 Id = m.PK.Substring(4), // trim off MAC#
                 Name = m.Name,
             }).ToList();
 
-            return JsonResponse(new Dtos.MachineListResponse { Machines = machines });
+            return JsonResponse(new MachineListResponse { Machines = machines });
         }
 
         internal async Task<APIGatewayHttpApiV2ProxyResponse> DeleteMachine(APIGatewayHttpApiV2ProxyRequest input)
@@ -181,7 +164,7 @@ namespace VendingMachine
 
             await repository.DeleteMachineAsync(id);
 
-            return JsonResponse(new Dtos.MachineDeleteResponse { Success = true });
+            return JsonResponse(new MachineDeleteResponse { Success = true });
         }
 
         internal async Task<APIGatewayHttpApiV2ProxyResponse> GetMachineDetails(APIGatewayHttpApiV2ProxyRequest input)
@@ -197,20 +180,16 @@ namespace VendingMachine
 
             if (machine == null)
             {
-                return new APIGatewayHttpApiV2ProxyResponse
-                {
-                    StatusCode = (int)HttpStatusCode.NotFound,
-                    Body = "Machine not found",
-                };
+                return JsonResponse(new GenericErrorResponse { Error = "Machine not found" }, HttpStatusCode.NotFound);
             }
 
-            var dto = new Dtos.MachineDetailsResponse
+            var dto = new MachineDetailsResponse
             {
-                Machine = new Dtos.MachineDetails
+                Machine = new MachineDetails
                 {
                     Id = machine.PK.Substring(4), // trim off MAC#
                     Name = machine.Name,
-                    Inventory = [.. machine.Inventory.Select(i => new Dtos.MachineInventoryEntry
+                    Inventory = [.. machine.Inventory.Select(i => new MachineInventoryEntry
                     {
                         Name = i.Name,
                         CostPennies = i.CostPennies,

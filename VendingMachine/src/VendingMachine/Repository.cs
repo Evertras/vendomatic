@@ -95,21 +95,18 @@ namespace VendingMachine
                     { "SK", new AttributeValue { S = machinePK } }
                 }
             };
+
             var machineAsync = db.GetItemAsync(getMachineRequest);
 
-            var inventoryPK = "INV#" + id;
-            var productScanRequest = new ScanRequest
-            {
+            var inventoryAsync = db.QueryAsync(new QueryRequest{
                 TableName = tableName,
-                FilterExpression = "PK = :pkval AND begins_with(SK, :skval)",
+                KeyConditionExpression = "PK = :pkval AND begins_with(SK, :skval)",
                 ExpressionAttributeValues = new Dictionary<string, AttributeValue>
                 {
-                    { ":pkval", new AttributeValue { S = inventoryPK } },
+                    { ":pkval", new AttributeValue { S = $"INV#{id}" } },
                     { ":skval", new AttributeValue { S = "PROD#" } },
                 }
-            };
-
-            var inventoryAsync = db.ScanAsync(productScanRequest);
+            });
 
             var machineResult = await machineAsync;
 
@@ -118,7 +115,9 @@ namespace VendingMachine
                 return null;
             }
 
-            var productScanResult = await inventoryAsync;
+            var productQueryResult = await inventoryAsync;
+
+            // TODO: set quantity
 
             return new Machine()
             {
@@ -126,7 +125,7 @@ namespace VendingMachine
                 SK = machineResult.Item["SK"].S!,
                 Name = machineResult.Item.TryGetValue("Name", out var nameAttr) ? nameAttr.S : null,
                 CreatedAt = machineResult.Item.TryGetValue("CreatedAt", out var createdAtAttr) && DateTime.TryParse(createdAtAttr.S, out var createdAt) ? createdAt : null,
-                Inventory = [.. productScanResult.Items.Select(i => new MachineInventoryEntry
+                Inventory = [.. productQueryResult.Items.Select(i => new MachineInventoryEntry
                 {
                     Name = i.TryGetValue("Name", out var itemNameAttr) ? itemNameAttr.S ?? string.Empty : string.Empty,
                     CostPennies = i.TryGetValue("CostPennies", out var costAttr) && int.TryParse(costAttr.N, out var cost) ? cost : 0,

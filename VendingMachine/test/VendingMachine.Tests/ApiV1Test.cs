@@ -139,8 +139,8 @@ public class ApiV1Test
                     { "CreatedAt", new AttributeValue { S = DateTime.UtcNow.ToString("o") } },
                 }
             });
-        mockAmazonDB.ScanAsync(Arg.Any<ScanRequest>(), Arg.Any<CancellationToken>())
-            .Returns(new ScanResponse
+        mockAmazonDB.QueryAsync(Arg.Any<QueryRequest>(), Arg.Any<CancellationToken>())
+            .Returns(new QueryResponse
             {
                 Items =
                 [

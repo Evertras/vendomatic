@@ -117,8 +117,6 @@ namespace VendingMachine
 
             var productQueryResult = await inventoryAsync;
 
-            // TODO: set quantity
-
             return new Machine()
             {
                 PK = machineResult.Item["PK"].S!,
@@ -129,6 +127,7 @@ namespace VendingMachine
                 {
                     Name = i.TryGetValue("Name", out var itemNameAttr) ? itemNameAttr.S ?? string.Empty : string.Empty,
                     CostPennies = i.TryGetValue("CostPennies", out var costAttr) && int.TryParse(costAttr.N, out var cost) ? cost : 0,
+                    Quantity = i.TryGetValue("Quantity", out var qtyAttr) && int.TryParse(qtyAttr.N, out var qty) ? qty : 0,
                 })],
             };
         }

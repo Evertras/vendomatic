@@ -20,5 +20,7 @@ namespace VendingMachine.Models
         public string Name { get; set; } = string.Empty;
 
         public int CostPennies { get; set; } = 0;
+
+        public int Quantity { get; set; } = 0;
     }
 }

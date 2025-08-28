@@ -214,6 +214,7 @@ namespace VendingMachine
                     {
                         Name = i.Name,
                         CostPennies = i.CostPennies,
+                        Quantity = i.Quantity,
                     })],
                 }
             };

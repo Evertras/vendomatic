@@ -149,12 +149,14 @@ public class ApiV1Test
                         { "SK", new AttributeValue { S = "ITEM#Soda" } },
                         { "Name", new AttributeValue { S = "Soda" } },
                         { "CostPennies", new AttributeValue { N = "150" } },
+                        { "Quantity", new AttributeValue { N = "10" } },
                     },
                     new() {
                         { "PK", new AttributeValue { S = "INV#1234" } },
                         { "SK", new AttributeValue { S = "ITEM#Chips" } },
                         { "Name", new AttributeValue { S = "Chips" } },
                         { "CostPennies", new AttributeValue { N = "100" } },
+                        { "Quantity", new AttributeValue { N = "7" } },
                     }
                 ]
             });
@@ -182,11 +184,13 @@ public class ApiV1Test
                     {
                         Name = "Soda",
                         CostPennies = 150,
+                        Quantity = 10,
                     },
                     new MachineInventoryEntry
                     {
                         Name = "Chips",
                         CostPennies = 100,
+                        Quantity = 7,
                     }
                 ]
             }

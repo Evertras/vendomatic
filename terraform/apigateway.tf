@@ -36,8 +36,8 @@ resource "aws_apigatewayv2_stage" "prod" {
   }
 
   default_route_settings {
-    throttling_burst_limit = 1
-    throttling_rate_limit  = 1
+    throttling_burst_limit = 5
+    throttling_rate_limit  = 5
   }
 }
 

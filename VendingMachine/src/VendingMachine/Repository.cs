@@ -90,16 +90,12 @@ namespace VendingMachine
             var requestItems = new List<WriteRequest>();
             foreach (var item in inventoryResult.Items)
             {
-                var invDeleteRequest = new WriteRequest
-                {
-                    DeleteRequest = {
-                        Key = new Dictionary<string, AttributeValue>
+                var invDeleteRequest = new WriteRequest(
+                    new DeleteRequest(new Dictionary<string, AttributeValue>
                         {
                             { "PK", item["PK"] },
                             { "SK", item["SK"] }
-                        }
-                    }
-                };
+                        }));
                 requestItems.Add(invDeleteRequest);
             }
 

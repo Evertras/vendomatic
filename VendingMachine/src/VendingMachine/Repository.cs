@@ -189,14 +189,14 @@ namespace VendingMachine
                 }
 
                 var innerItem = new Dictionary<string, AttributeValue>
-                            {
-                                { "PK", new AttributeValue { S = $"INV#{id}" } },
-                                { "SK", new AttributeValue { S = "PROD#" + item.Name } },
-                                { "Name", new AttributeValue { S = item.Name } },
-                                { "CostPennies", new AttributeValue { N = item.CostPennies.ToString() } },
-                                { "Quantity", new AttributeValue { N = item.Quantity.ToString() } },
-                                { "RestockedAt", new AttributeValue { S = DateTime.UtcNow.ToString("o") } },
-                            };
+                {
+                    { "PK", new AttributeValue { S = $"INV#{id}" } },
+                    { "SK", new AttributeValue { S = "PROD#" + item.Name } },
+                    { "Name", new AttributeValue { S = item.Name } },
+                    { "CostPennies", new AttributeValue { N = item.CostPennies.ToString() } },
+                    { "Quantity", new AttributeValue { N = item.Quantity.ToString() } },
+                    { "RestockedAt", new AttributeValue { S = DateTime.UtcNow.ToString("o") } },
+                };
 
                 var putRequest = new WriteRequest(new PutRequest(innerItem));
 
@@ -206,16 +206,12 @@ namespace VendingMachine
             foreach (var item in currentInventory.Where(i => !updatedInventoryDict.ContainsKey(i.Name)))
             {
                 // Delete the old item entirely
-                requestItems.Add(new WriteRequest
+                var innerItem = new Dictionary<string, AttributeValue>
                 {
-                    DeleteRequest = {
-                            Key = new Dictionary<string, AttributeValue>
-                            {
-                                { "PK", new AttributeValue { S = $"INV#{id}" } },
-                                { "SK", new AttributeValue { S = "PROD#" + item.Name } }
-                            }
-                        }
-                });
+                    { "PK", new AttributeValue { S = $"INV#{id}" } },
+                    { "SK", new AttributeValue { S = "PROD#" + item.Name } },
+                };
+                requestItems.Add(new WriteRequest(new DeleteRequest(innerItem)));
             }
 
             await DoBatchRequestsAsync(requestItems);

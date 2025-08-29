@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# This isn't a very good automated test, but it's a good sanity check to run quickly for now.
+
 baseUrl="https://vendomatic.evertras.com/api/v1"
 machineName="Integration Test Machine $(date)"
 

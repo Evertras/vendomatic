@@ -53,6 +53,11 @@ echo "Restocking machine with different inventory"
 curl -XPUT "$baseUrl/machines/$machineId/inventory" -H "Content-Type: application/json" -d '{
   "inventory": [
     {
+      "name": "Soda",
+      "quantityTarget": 10,
+      "costPennies": 100
+    },
+    {
       "name": "Juice",
       "quantityTarget": 20,
       "costPennies": 200

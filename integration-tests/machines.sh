@@ -20,9 +20,11 @@ echo "Getting list"
 curl -XGET "$baseUrl/machines"
 
 echo ""
+echo ""
 echo "Checking machine inventory"
 curl -XGET "$baseUrl/machines/$machineId"
 
+echo ""
 echo ""
 echo "Restocking machine"
 curl -XPUT "$baseUrl/machines/$machineId/inventory" -H "Content-Type: application/json" -d '{
@@ -41,5 +43,34 @@ curl -XPUT "$baseUrl/machines/$machineId/inventory" -H "Content-Type: applicatio
 }'
 
 echo ""
+echo ""
 echo "Checking machine inventory"
 curl -XGET "$baseUrl/machines/$machineId"
+
+echo ""
+echo ""
+echo "Restocking machine with different inventory"
+curl -XPUT "$baseUrl/machines/$machineId/inventory" -H "Content-Type: application/json" -d '{
+  "inventory": [
+    {
+      "name": "Juice",
+      "quantityTarget": 20,
+      "costPennies": 200
+    },
+    {
+      "name": "Pretzels",
+      "quantityTarget": 3,
+      "costPennies": 180
+    }
+  ]
+}'
+
+echo ""
+echo ""
+echo "Checking machine inventory"
+curl -XGET "$baseUrl/machines/$machineId"
+
+echo ""
+echo ""
+echo "Deleting machine"
+curl -XDELETE "$baseUrl/machines/$machineId"

@@ -9,6 +9,7 @@ using System.Runtime.CompilerServices;
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.SystemTextJson.DefaultLambdaJsonSerializer))]
 
 [assembly: InternalsVisibleTo("VendingMachine.Tests")]
+[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
 namespace VendingMachine;
 
 // Acts as an entry point for AWS to invoke the Lambda function. Only worry about

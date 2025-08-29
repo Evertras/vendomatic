@@ -17,18 +17,6 @@ public class ApiV1Test
 {
     const string tableName = "test-table";
 
-    internal static T GetResponseIsOK<T>(APIGatewayHttpApiV2ProxyResponse res)
-    {
-        res.StatusCode.Should().Be((int)HttpStatusCode.OK);
-        res.Body.Should().NotBeNull();
-        res.Headers.Should().ContainKey("Content-Type");
-        res.Headers["Content-Type"].Should().Be("application/json");
-
-        var resObj = JsonSerializer.Deserialize<T>(res.Body!);
-        resObj.Should().NotBeNull();
-        return resObj;
-    }
-
     [Fact]
     public async Task TestGetMachineListGetsMachines()
     {
@@ -68,7 +56,7 @@ public class ApiV1Test
             ]
         };
 
-        var resObj = GetResponseIsOK<MachineListResponse>(res);
+        var resObj = HttpValidationHelpers.GetResponseIsOK<MachineListResponse>(res);
         resObj.Should().BeEquivalentTo(expectedResponse);
     }
 
@@ -95,7 +83,7 @@ public class ApiV1Test
                 { "content-type", "application/json" }
             }
         });
-        var resObj = GetResponseIsOK<MachineCreateResponse>(res);
+        var resObj = HttpValidationHelpers.GetResponseIsOK<MachineCreateResponse>(res);
         resObj.Machine.Should().NotBeNull();
         resObj.Machine.Id.Should().NotBeNullOrEmpty();
     }
@@ -123,7 +111,7 @@ public class ApiV1Test
             }
         });
 
-        var resObj = GetResponseIsOK<MachineDeleteResponse>(res);
+        var resObj = HttpValidationHelpers.GetResponseIsOK<MachineDeleteResponse>(res);
 
         resObj.Success.Should().BeTrue();
 
@@ -178,7 +166,7 @@ public class ApiV1Test
                 { "id", "1234" }
             }
         });
-        var resObj = GetResponseIsOK<MachineDetailsResponse>(res);
+        var resObj = HttpValidationHelpers.GetResponseIsOK<MachineDetailsResponse>(res);
 
         var expectedResponse = new MachineDetailsResponse
         {
@@ -265,7 +253,7 @@ public class ApiV1Test
                 { "content-type", "application/json" }
             }
         });
-        var resObj = GetResponseIsOK<MachineRestockResponse>(res);
+        var resObj = HttpValidationHelpers.GetResponseIsOK<MachineRestockResponse>(res);
 
         resObj.Should().BeEquivalentTo(expectedResponse);
 

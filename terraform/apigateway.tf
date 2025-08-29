@@ -2,9 +2,12 @@ resource "aws_apigatewayv2_api" "vending_machine" {
   name          = "${local.prefix}-api"
   protocol_type = "HTTP"
   cors_configuration {
-    allow_headers  = ["*"]
-    allow_methods  = ["*"]
-    allow_origins  = ["https://${var.site_domain}"]
+    allow_headers = ["*"]
+    allow_methods = ["*"]
+    allow_origins = [
+      "https://${var.site_domain}",
+      "https://editor.swagger.io",
+    ]
     expose_headers = ["*"]
     max_age        = 3600
   }

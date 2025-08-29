@@ -120,9 +120,9 @@ namespace VendingMachine
                 Name = req.Name,
             };
 
-            var id = await repository.AddMachineAsync(machine);
+            var id = await repository.CreateMachineAsync(machine);
 
-            return JsonResponse(new MachineCreateResponse { Machine = { Id = id } });
+            return JsonResponse(new MachineCreateResponse { Machine = { Id = id, Name = req.Name } });
         }
 
         internal async Task<APIGatewayHttpApiV2ProxyResponse> ListMachinesAsync(APIGatewayHttpApiV2ProxyRequest input)

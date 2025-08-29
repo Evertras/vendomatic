@@ -13,7 +13,7 @@ namespace VendingMachine
 {
     internal interface IRepository
     {
-        Task<string> AddMachineAsync(Machine machine);
+        Task<string> CreateMachineAsync(Machine machine);
         Task<List<Machine>> ListMachinesAsync();
         Task DeleteMachineAsync(string id);
         Task<Machine?> GetMachineAsync(string id);
@@ -22,7 +22,7 @@ namespace VendingMachine
 
     internal class Repository(IAmazonDynamoDB db, string tableName) : IRepository
     {
-        public async Task<string> AddMachineAsync(Machine machine)
+        public async Task<string> CreateMachineAsync(Machine machine)
         {
             var id = Guid.NewGuid().ToString();
             machine.PK = "MAC#" + id;

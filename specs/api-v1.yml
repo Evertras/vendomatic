@@ -2,6 +2,8 @@ openapi: 3.1.0
 info:
   title: Vendomatic API
   version: 0.0.1
+servers:
+  - url: https://vendomatic.evertras.com/api/v1
 paths:
   /machines:
     get:
@@ -67,6 +69,31 @@ paths:
       responses:
         '204':
           description: Machine deleted
+  /machines/{id}/inventory:
+    put:
+      summary: Update machine inventory
+      operationId: updateMachineInventory
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The ID of the machine to update
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MachineRestockRequest'
+      responses:
+        '200':
+          description: Inventory updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MachineRestockResponse'
+
 components:
   schemas:
     Machine:
@@ -155,6 +182,39 @@ components:
             $ref: '#/components/schemas/Machine'
 
     MachineDeleteResponse:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+
+    MachineRestockRequest:
+      type: object
+      required:
+        - inventory
+      properties:
+        inventory:
+          type: array
+          items:
+            type: object
+            required:
+              - name
+              - quantityTarget
+              - costPennies
+            properties:
+              name:
+                type: string
+                minLength: 1
+                maxLength: 100
+              quantityTarget:
+                type: integer
+                minimum: 1
+              costPennies:
+                type: integer
+                minimum: 1
+
+    MachineRestockResponse:
       type: object
       required:
         - success

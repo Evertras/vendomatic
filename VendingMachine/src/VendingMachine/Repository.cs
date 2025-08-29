@@ -17,6 +17,7 @@ namespace VendingMachine
         Task<List<Machine>> ListMachinesAsync();
         Task DeleteMachineAsync(string id);
         Task<Machine?> GetMachineAsync(string id);
+        Task<List<MachineInventoryEntry>> RestockMachineAsync(string id, IEnumerable<MachineInventoryEntry> items);
     }
 
     internal class Repository(IAmazonDynamoDB db, string tableName) : IRepository
@@ -82,7 +83,10 @@ namespace VendingMachine
 
             var inventoryResult = await db.QueryAsync(inventoryQuery);
 
-            // Delete in batches
+            // Delete in batches, we don't actually gain much from transact here
+            // because if anything fails we want to retry anyway... we're left
+            // with a partial inventory, but the real fix would be to disable
+            // the machine before attempting this deleting, which is a nice TODO
             var requestItems = new List<WriteRequest>();
             foreach (var item in inventoryResult.Items)
             {
@@ -97,27 +101,9 @@ namespace VendingMachine
                     }
                 };
                 requestItems.Add(invDeleteRequest);
-
-                if (requestItems.Count == 25)
-                {
-                    var batchRequest = new BatchWriteItemRequest
-                    {
-                        RequestItems = new Dictionary<string, List<WriteRequest>>
-                        {
-                            { tableName, requestItems }
-                        }
-                    };
-                    var batchResult = await db.BatchWriteItemAsync(batchRequest);
-                    Console.WriteLine(JsonSerializer.Serialize(batchResult));
-
-                    // For now don't retry here, just fail
-                    if (batchResult.UnprocessedItems != null && batchResult.UnprocessedItems.Count > 0)
-                    {
-                        throw new Exception("Failed to delete all inventory items");
-                    }
-                    requestItems.Clear();
-                }
             }
+
+            await DoBatchRequestsAsync(requestItems);
 
             // Delete the machine itself only after inventory items are successfully deleted,
             // because if any fail then we might have some orphaned inventory hanging around.
@@ -149,9 +135,32 @@ namespace VendingMachine
                 }
             };
 
+            // Start the calls concurrently
+            var inventoryAsync = GetMachineInventoryAsync(id);
             var machineAsync = db.GetItemAsync(getMachineRequest);
 
-            var inventoryAsync = db.QueryAsync(new QueryRequest
+            // Merge results
+            var inventoryResult = await inventoryAsync;
+            var machineResult = await machineAsync;
+
+            if (machineResult.Item == null || machineResult.Item.Count == 0)
+            {
+                return null;
+            }
+
+            return new Machine()
+            {
+                PK = machineResult.Item["PK"].S!,
+                SK = machineResult.Item["SK"].S!,
+                Name = machineResult.Item.TryGetValue("Name", out var nameAttr) ? nameAttr.S : "",
+                CreatedAt = machineResult.Item.TryGetValue("CreatedAt", out var createdAtAttr) && DateTime.TryParse(createdAtAttr.S, out var createdAt) ? createdAt : DateTime.MinValue,
+                Inventory = inventoryResult,
+            };
+        }
+
+        private async Task<List<MachineInventoryEntry>> GetMachineInventoryAsync(string id)
+        {
+            var result = await db.QueryAsync(new QueryRequest
             {
                 TableName = tableName,
                 KeyConditionExpression = "PK = :pkval AND begins_with(SK, :skval)",
@@ -162,28 +171,100 @@ namespace VendingMachine
                 }
             });
 
-            var machineResult = await machineAsync;
-
-            if (machineResult.Item == null || machineResult.Item.Count == 0)
+            return [.. result.Items.Select(i => new MachineInventoryEntry
             {
-                return null;
+                Name = i.TryGetValue("Name", out var itemNameAttr) ? itemNameAttr.S ?? string.Empty : string.Empty,
+                CostPennies = i.TryGetValue("CostPennies", out var costAttr) && int.TryParse(costAttr.N, out var cost) ? cost : 0,
+                Quantity = i.TryGetValue("Quantity", out var qtyAttr) && int.TryParse(qtyAttr.N, out var qty) ? qty : 0,
+            })];
+        }
+
+        public async Task<List<MachineInventoryEntry>> RestockMachineAsync(string id, IEnumerable<MachineInventoryEntry> items)
+        {
+            var currentInventory = await GetMachineInventoryAsync(id);
+            var updatedInventoryDict = items.ToDictionary(i => i.Name, i => i);
+
+            var requestItems = new List<WriteRequest>();
+            foreach (var item in items)
+            {
+                if (item == null)
+                {
+                    throw new ArgumentException("Inventory item cannot be null");
+                }
+
+                var innerItem = new Dictionary<string, AttributeValue>
+                            {
+                                { "PK", new AttributeValue { S = $"INV#{id}" } },
+                                { "SK", new AttributeValue { S = "PROD#" + item.Name } },
+                                { "Name", new AttributeValue { S = item.Name } },
+                                { "CostPennies", new AttributeValue { N = item.CostPennies.ToString() } },
+                                { "Quantity", new AttributeValue { N = item.Quantity.ToString() } },
+                                { "RestockedAt", new AttributeValue { S = DateTime.UtcNow.ToString("o") } },
+                            };
+
+                var putRequest = new WriteRequest(new PutRequest(innerItem));
+
+                requestItems.Add(putRequest);
             }
 
-            var productQueryResult = await inventoryAsync;
-
-            return new Machine()
+            foreach (var item in currentInventory.Where(i => !updatedInventoryDict.ContainsKey(i.Name)))
             {
-                PK = machineResult.Item["PK"].S!,
-                SK = machineResult.Item["SK"].S!,
-                Name = machineResult.Item.TryGetValue("Name", out var nameAttr) ? nameAttr.S : null,
-                CreatedAt = machineResult.Item.TryGetValue("CreatedAt", out var createdAtAttr) && DateTime.TryParse(createdAtAttr.S, out var createdAt) ? createdAt : null,
-                Inventory = [.. productQueryResult.Items.Select(i => new MachineInventoryEntry
+                // Delete the old item entirely
+                requestItems.Add(new WriteRequest
                 {
-                    Name = i.TryGetValue("Name", out var itemNameAttr) ? itemNameAttr.S ?? string.Empty : string.Empty,
-                    CostPennies = i.TryGetValue("CostPennies", out var costAttr) && int.TryParse(costAttr.N, out var cost) ? cost : 0,
-                    Quantity = i.TryGetValue("Quantity", out var qtyAttr) && int.TryParse(qtyAttr.N, out var qty) ? qty : 0,
-                })],
-            };
+                    DeleteRequest = {
+                            Key = new Dictionary<string, AttributeValue>
+                            {
+                                { "PK", new AttributeValue { S = $"INV#{id}" } },
+                                { "SK", new AttributeValue { S = "PROD#" + item.Name } }
+                            }
+                        }
+                });
+            }
+
+            await DoBatchRequestsAsync(requestItems);
+
+            return currentInventory;
+        }
+
+        // Does the specified requests as a batch. This is NOT atomic/transactional!
+        private async Task DoBatchRequestsAsync(IEnumerable<WriteRequest> requests)
+        {
+            var requestItems = new List<WriteRequest>();
+
+            async Task flushAsync()
+            {
+                if (requestItems.Count == 0) return;
+
+                var batchRequest = new BatchWriteItemRequest
+                {
+                    RequestItems = new Dictionary<string, List<WriteRequest>>
+                        {
+                            { tableName, requestItems }
+                        }
+                };
+
+                var batchResult = await db.BatchWriteItemAsync(batchRequest);
+
+                // For now don't retry here, just fail
+                if (batchResult.UnprocessedItems != null && batchResult.UnprocessedItems.Count > 0)
+                {
+                    throw new Exception($"Failed to process all batch items, {batchResult.UnprocessedItems.Count} failed");
+                }
+
+                requestItems.Clear();
+            }
+
+            foreach (var req in requests)
+            {
+                requestItems.Add(req);
+                if (requestItems.Count == 25)
+                {
+                    await flushAsync();
+                }
+            }
+
+            await flushAsync();
         }
     }
 }

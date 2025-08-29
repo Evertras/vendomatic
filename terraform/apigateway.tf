@@ -62,5 +62,6 @@ module "endpoint_vending_machine" {
     "POST /api/v1/machines",
     "GET /api/v1/machines/{id}",
     "DELETE /api/v1/machines/{id}",
+    "PUT /api/v1/machines/{id}/inventory"
   ]
 }

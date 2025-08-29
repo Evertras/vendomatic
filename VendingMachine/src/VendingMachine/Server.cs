@@ -19,26 +19,17 @@ namespace VendingMachine
 
                 // Dumbest router ever, but for now it works... note this is keyed off AWS API Gateway integration entries,
                 // not the actual HTTP method and path
-                switch (input.RouteKey)
+                return input.RouteKey switch
                 {
-                    case "POST /api/v1/machines":
-                        return await CreateMachine(input);
-
-                    case "GET /api/v1/machines":
-                        return await ListMachines(input);
-
-                    case "GET /api/v1/machines/{id}":
-                        return await GetMachineDetails(input);
-
-                    case "DELETE /api/v1/machines/{id}":
-                        return await DeleteMachine(input);
-
-
-                    default:
-                        return JsonResponse(
-                            new GenericErrorResponse { Error = $"Route {input.RouteKey ?? "NULL"} Not Found" },
-                            HttpStatusCode.NotFound);
-                }
+                    "GET /api/v1/machines" => await ListMachinesAsync(input),
+                    "POST /api/v1/machines" => await CreateMachineAsync(input),
+                    "GET /api/v1/machines/{id}" => await GetMachineDetailsAsync(input),
+                    "DELETE /api/v1/machines/{id}" => await DeleteMachineAsync(input),
+                    "PUT /api/v1/machines/{id}/inventory" => await RestockMachineAsync(input),
+                    _ => JsonResponse(
+                        new GenericErrorResponse { Error = $"Route {input.RouteKey ?? "NULL"} Not Found" },
+                        HttpStatusCode.NotFound),
+                };
             }
             catch (ArgumentException ex)
             {
@@ -120,7 +111,7 @@ namespace VendingMachine
             return ret;
         }
 
-        internal async Task<APIGatewayHttpApiV2ProxyResponse> CreateMachine(APIGatewayHttpApiV2ProxyRequest input)
+        internal async Task<APIGatewayHttpApiV2ProxyResponse> CreateMachineAsync(APIGatewayHttpApiV2ProxyRequest input)
         {
             var req = ParseBodyRequest<MachineCreateRequest>(input);
 
@@ -134,7 +125,7 @@ namespace VendingMachine
             return JsonResponse(new MachineCreateResponse { Machine = { Id = id } });
         }
 
-        internal async Task<APIGatewayHttpApiV2ProxyResponse> ListMachines(APIGatewayHttpApiV2ProxyRequest input)
+        internal async Task<APIGatewayHttpApiV2ProxyResponse> ListMachinesAsync(APIGatewayHttpApiV2ProxyRequest input)
         {
             var machinesRaw = await repository.ListMachinesAsync();
 
@@ -147,7 +138,7 @@ namespace VendingMachine
             return JsonResponse(new MachineListResponse { Machines = machines });
         }
 
-        internal async Task<APIGatewayHttpApiV2ProxyResponse> DeleteMachine(APIGatewayHttpApiV2ProxyRequest input)
+        internal async Task<APIGatewayHttpApiV2ProxyResponse> DeleteMachineAsync(APIGatewayHttpApiV2ProxyRequest input)
         {
             var id = input.PathParameters["id"];
 
@@ -161,7 +152,7 @@ namespace VendingMachine
             return JsonResponse(new MachineDeleteResponse { Success = true });
         }
 
-        internal async Task<APIGatewayHttpApiV2ProxyResponse> GetMachineDetails(APIGatewayHttpApiV2ProxyRequest input)
+        internal async Task<APIGatewayHttpApiV2ProxyResponse> GetMachineDetailsAsync(APIGatewayHttpApiV2ProxyRequest input)
         {
             var id = input.PathParameters["id"];
 
@@ -193,6 +184,25 @@ namespace VendingMachine
             };
 
             return JsonResponse(dto);
+        }
+
+        internal async Task<APIGatewayHttpApiV2ProxyResponse> RestockMachineAsync(APIGatewayHttpApiV2ProxyRequest input)
+        {
+            var id = input.PathParameters["id"];
+            if (string.IsNullOrEmpty(id))
+            {
+                throw new ArgumentException("id is required");
+            }
+            var req = ParseBodyRequest<MachineRestockRequest>(input);
+            var res = await repository.RestockMachineAsync(id, req.Inventory.Select(
+                i => new Models.MachineInventoryEntry
+                {
+                    Name = i.Name,
+                    CostPennies = i.CostPennies,
+                    Quantity = i.QuantityTarget,
+                }));
+
+            return JsonResponse(new MachineRestockResponse { Success = true });
         }
     }
 }

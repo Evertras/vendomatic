@@ -8,9 +8,9 @@ namespace VendingMachine.Models
 
         public string SK { get; set; } = string.Empty;
 
-        public string? Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
-        public DateTime? CreatedAt { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.MinValue;
 
         public List<MachineInventoryEntry> Inventory { get; set; } = [];
     }
@@ -22,5 +22,7 @@ namespace VendingMachine.Models
         public int CostPennies { get; set; } = 0;
 
         public int Quantity { get; set; } = 0;
+
+        public DateTime RestockedAt { get; set; } = DateTime.MinValue;
     }
 }

@@ -129,5 +129,21 @@ namespace VendingMachine.Tests
             var resObj = HttpTestHelpers.GetResponseIs<GenericErrorResponse>(res, System.Net.HttpStatusCode.NotFound);
             resObj.Error.Should().Be("Machine not found");
         }
+
+        [Fact]
+        public async Task TestDeleteMachineSucceeds()
+        {
+            var mockRepository = Substitute.For<IRepository>();
+            var server = new Server(mockRepository);
+            var expectedResponse = new MachineDeleteResponse
+            {
+                Success = true
+            };
+            var req = HttpTestHelpers.RequestFor("DELETE /api/v1/machines/{id}", id: "abc-def");
+            var res = await server.HandleRequest(req);
+            var resObj = HttpTestHelpers.GetResponseIsOK<MachineDeleteResponse>(res);
+            resObj.Should().BeEquivalentTo(expectedResponse);
+            await mockRepository.Received(1).DeleteMachineAsync("abc-def");
+        }
     }
 }

@@ -203,7 +203,7 @@ namespace VendingMachine.Tests
             };
             var req = HttpTestHelpers.RequestFor("PUT /api/v1/machines/{id}/inventory", id: "abc-def", body: new MachineRestockRequest
             {
-                Inventory = [..  targetInventory],
+                Inventory = [.. targetInventory],
             });
             var res = await server.HandleRequest(req);
             var resObj = HttpTestHelpers.GetResponseIsOK<MachineRestockResponse>(res);

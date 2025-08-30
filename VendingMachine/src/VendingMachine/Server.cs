@@ -129,7 +129,7 @@ namespace VendingMachine
         {
             var machinesRaw = await repository.ListMachinesAsync();
 
-            var machines = machinesRaw.Select(m => new Machine
+            var machines = machinesRaw.Select(m => new MachineSummary
             {
                 Id = m.PK.Substring(4), // trim off MAC#
                 Name = m.Name,

@@ -27,7 +27,7 @@ namespace VendingMachine.Dtos
     
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class Machine
+    public partial class MachineSummary
     {
 
         [System.Text.Json.Serialization.JsonPropertyName("id")]
@@ -151,7 +151,7 @@ namespace VendingMachine.Dtos
 
         [System.Text.Json.Serialization.JsonPropertyName("machine")]
         [System.ComponentModel.DataAnnotations.Required]
-        public Machine Machine { get; set; } = new Machine();
+        public MachineSummary Machine { get; set; } = new MachineSummary();
 
         private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
 
@@ -170,7 +170,7 @@ namespace VendingMachine.Dtos
 
         [System.Text.Json.Serialization.JsonPropertyName("machines")]
         [System.ComponentModel.DataAnnotations.Required]
-        public System.Collections.Generic.ICollection<Machine> Machines { get; set; } = new System.Collections.ObjectModel.Collection<Machine>();
+        public System.Collections.Generic.ICollection<MachineSummary> Machines { get; set; } = new System.Collections.ObjectModel.Collection<MachineSummary>();
 
         private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
 

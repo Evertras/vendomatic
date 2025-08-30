@@ -26,7 +26,7 @@ public class ServerTest
         };
         var res = await server.HandleRequest(req);
 
-        var resObj = HttpValidationHelpers.GetResponseIs<GenericErrorResponse>(res, HttpStatusCode.NotFound);
+        var resObj = HttpTestHelpers.GetResponseIs<GenericErrorResponse>(res, HttpStatusCode.NotFound);
 
         resObj.Error.Should().NotBeNull();
         resObj!.Error.Should().Be("Route GET /not/a/real/route Not Found");

@@ -10,7 +10,7 @@ using System.Text.Json;
 
 namespace VendingMachine.Tests;
 
-internal class HttpValidationHelpers
+internal class HttpTestHelpers
 {
     internal static T GetResponseIsOK<T>(APIGatewayHttpApiV2ProxyResponse res)
     {
@@ -26,5 +26,22 @@ internal class HttpValidationHelpers
         var resObj = JsonSerializer.Deserialize<T>(res.Body!);
         resObj.Should().NotBeNull();
         return resObj;
+    }
+
+    internal static APIGatewayHttpApiV2ProxyRequest RequestFor(string routeKey, object? body = null, string? id = null)
+    {
+        return new APIGatewayHttpApiV2ProxyRequest
+        {
+            RouteKey = routeKey,
+            PathParameters = id == null ? null : new Dictionary<string, string>
+            {
+                { "id", id }
+            },
+            Body = body == null ? null : JsonSerializer.Serialize(body),
+            Headers = body == null ? null : new Dictionary<string, string>
+            {
+                { "Content-Type", "application/json" },
+            }
+        };
     }
 }

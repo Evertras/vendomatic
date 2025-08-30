@@ -48,7 +48,7 @@ public class ApiV1Test
         {
             Machines =
             [
-                new Machine
+                new MachineSummary
                 {
                     Id = "1234",
                     Name = "Test Machine",
@@ -56,7 +56,7 @@ public class ApiV1Test
             ]
         };
 
-        var resObj = HttpValidationHelpers.GetResponseIsOK<MachineListResponse>(res);
+        var resObj = HttpTestHelpers.GetResponseIsOK<MachineListResponse>(res);
         resObj.Should().BeEquivalentTo(expectedResponse);
     }
 
@@ -83,7 +83,7 @@ public class ApiV1Test
                 { "content-type", "application/json" }
             }
         });
-        var resObj = HttpValidationHelpers.GetResponseIsOK<MachineCreateResponse>(res);
+        var resObj = HttpTestHelpers.GetResponseIsOK<MachineCreateResponse>(res);
         resObj.Machine.Should().NotBeNull();
         resObj.Machine.Id.Should().NotBeNullOrEmpty();
     }
@@ -111,7 +111,7 @@ public class ApiV1Test
             }
         });
 
-        var resObj = HttpValidationHelpers.GetResponseIsOK<MachineDeleteResponse>(res);
+        var resObj = HttpTestHelpers.GetResponseIsOK<MachineDeleteResponse>(res);
 
         resObj.Success.Should().BeTrue();
 
@@ -166,7 +166,7 @@ public class ApiV1Test
                 { "id", "1234" }
             }
         });
-        var resObj = HttpValidationHelpers.GetResponseIsOK<MachineDetailsResponse>(res);
+        var resObj = HttpTestHelpers.GetResponseIsOK<MachineDetailsResponse>(res);
 
         var expectedResponse = new MachineDetailsResponse
         {
@@ -253,7 +253,7 @@ public class ApiV1Test
                 { "content-type", "application/json" }
             }
         });
-        var resObj = HttpValidationHelpers.GetResponseIsOK<MachineRestockResponse>(res);
+        var resObj = HttpTestHelpers.GetResponseIsOK<MachineRestockResponse>(res);
 
         resObj.Should().BeEquivalentTo(expectedResponse);
 

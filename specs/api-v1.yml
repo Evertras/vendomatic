@@ -96,7 +96,7 @@ paths:
 
 components:
   schemas:
-    Machine:
+    MachineSummary:
       type: object
       required:
         - id
@@ -169,7 +169,7 @@ components:
         - machine
       properties:
         machine:
-          $ref: '#/components/schemas/Machine'
+          $ref: '#/components/schemas/MachineSummary'
 
     MachineListResponse:
       type: object
@@ -179,7 +179,7 @@ components:
         machines:
           type: array
           items:
-            $ref: '#/components/schemas/Machine'
+            $ref: '#/components/schemas/MachineSummary'
 
     MachineDeleteResponse:
       type: object

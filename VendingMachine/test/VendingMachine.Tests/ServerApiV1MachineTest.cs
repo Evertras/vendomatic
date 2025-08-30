@@ -117,5 +117,17 @@ namespace VendingMachine.Tests
             var resObj = HttpTestHelpers.GetResponseIsOK<MachineDetailsResponse>(res);
             resObj.Should().BeEquivalentTo(expectedResponse);
         }
+
+        [Fact]
+        public async Task TestGetMachineReturns404WithErrorMessage()
+        {
+            var mockRepository = Substitute.For<IRepository>();
+            mockRepository.GetMachineAsync("nonexistent").Returns((Models.Machine?)null);
+            var server = new Server(mockRepository);
+            var req = HttpTestHelpers.RequestFor("GET /api/v1/machines/{id}", id: "nonexistent");
+            var res = await server.HandleRequest(req);
+            var resObj = HttpTestHelpers.GetResponseIs<GenericErrorResponse>(res, System.Net.HttpStatusCode.NotFound);
+            resObj.Error.Should().Be("Machine not found");
+        }
     }
 }

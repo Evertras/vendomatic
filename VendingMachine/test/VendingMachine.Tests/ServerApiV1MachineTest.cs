@@ -34,11 +34,13 @@ namespace VendingMachine.Tests
             var expectedResponse = new MachineListResponse
             {
                 Machines = [
-                    new() {
+                    new()
+                    {
                         Id = "abc-def",
                         Name = "Machine A",
                     },
-                    new() {
+                    new()
+                    {
                         Id = "123-xyz",
                         Name = "Machine B",
                     },
@@ -79,6 +81,41 @@ namespace VendingMachine.Tests
             var res = await server.HandleRequest(req);
             var resObj = HttpTestHelpers.GetResponseIs<GenericErrorResponse>(res, System.Net.HttpStatusCode.BadRequest);
             resObj.Error.Should().StartWith("Validation failed");
+        }
+
+        [Fact]
+        public async Task TestGetMachineSucceeds()
+        {
+            var mockRepository = Substitute.For<IRepository>();
+            mockRepository.GetMachineAsync("abc-def").Returns(new Models.Machine
+            {
+                PK = "MAC#abc-def",
+                SK = "MAC#abc-def",
+                Name = "Machine A",
+                Inventory =
+                [
+                    new Models.MachineInventoryEntry { Name = "Soda", Quantity = 10 },
+                    new Models.MachineInventoryEntry { Name = "Chips", Quantity = 5 },
+                ]
+            });
+            var server = new Server(mockRepository);
+            var expectedResponse = new MachineDetailsResponse
+            {
+                Machine = new()
+                {
+                    Id = "abc-def",
+                    Name = "Machine A",
+                    Inventory =
+                    [
+                        new() { Name = "Soda", Quantity = 10 },
+                        new() { Name = "Chips", Quantity = 5 },
+                    ]
+                }
+            };
+            var req = HttpTestHelpers.RequestFor("GET /api/v1/machines/{id}", id: "abc-def");
+            var res = await server.HandleRequest(req);
+            var resObj = HttpTestHelpers.GetResponseIsOK<MachineDetailsResponse>(res);
+            resObj.Should().BeEquivalentTo(expectedResponse);
         }
     }
 }

@@ -47,7 +47,9 @@ namespace VendingMachine.Tests
                 ]
             };
             var req = HttpTestHelpers.RequestFor("GET /api/v1/machines");
+
             var res = await server.HandleRequest(req);
+
             var resObj = HttpTestHelpers.GetResponseIsOK<MachineListResponse>(res);
             resObj.Should().BeEquivalentTo(expectedResponse);
         }
@@ -67,7 +69,9 @@ namespace VendingMachine.Tests
                 }
             };
             var req = HttpTestHelpers.RequestFor("POST /api/v1/machines", body: new MachineCreateRequest { Name = "Machine A" });
+
             var res = await server.HandleRequest(req);
+
             var resObj = HttpTestHelpers.GetResponseIsOK<MachineCreateResponse>(res);
             resObj.Should().BeEquivalentTo(expectedResponse);
         }
@@ -78,7 +82,9 @@ namespace VendingMachine.Tests
             var mockRepository = Substitute.For<IRepository>();
             var server = new Server(mockRepository);
             var req = HttpTestHelpers.RequestFor("POST /api/v1/machines", body: new MachineCreateRequest { Name = "" });
+
             var res = await server.HandleRequest(req);
+
             var resObj = HttpTestHelpers.GetResponseIs<GenericErrorResponse>(res, System.Net.HttpStatusCode.BadRequest);
             resObj.Error.Should().StartWith("Validation failed");
         }
@@ -113,7 +119,9 @@ namespace VendingMachine.Tests
                 }
             };
             var req = HttpTestHelpers.RequestFor("GET /api/v1/machines/{id}", id: "abc-def");
+
             var res = await server.HandleRequest(req);
+
             var resObj = HttpTestHelpers.GetResponseIsOK<MachineDetailsResponse>(res);
             resObj.Should().BeEquivalentTo(expectedResponse);
         }
@@ -125,7 +133,9 @@ namespace VendingMachine.Tests
             mockRepository.GetMachineAsync("nonexistent").Returns((Models.Machine?)null);
             var server = new Server(mockRepository);
             var req = HttpTestHelpers.RequestFor("GET /api/v1/machines/{id}", id: "nonexistent");
+
             var res = await server.HandleRequest(req);
+
             var resObj = HttpTestHelpers.GetResponseIs<GenericErrorResponse>(res, System.Net.HttpStatusCode.NotFound);
             resObj.Error.Should().Be("Machine not found");
         }
@@ -140,7 +150,9 @@ namespace VendingMachine.Tests
                 Success = true
             };
             var req = HttpTestHelpers.RequestFor("DELETE /api/v1/machines/{id}", id: "abc-def");
+
             var res = await server.HandleRequest(req);
+
             var resObj = HttpTestHelpers.GetResponseIsOK<MachineDeleteResponse>(res);
             resObj.Should().BeEquivalentTo(expectedResponse);
             await mockRepository.Received(1).DeleteMachineAsync("abc-def");
@@ -205,7 +217,9 @@ namespace VendingMachine.Tests
             {
                 Inventory = [.. targetInventory],
             });
+
             var res = await server.HandleRequest(req);
+
             var resObj = HttpTestHelpers.GetResponseIsOK<MachineRestockResponse>(res);
             resObj.Should().BeEquivalentTo(expectedResponse);
             await mockRepository.Received(1).RestockMachineAsync("abc-def", Arg.Is<IEnumerable<Models.MachineInventoryEntry>>(inv =>

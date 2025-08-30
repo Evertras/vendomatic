@@ -145,5 +145,73 @@ namespace VendingMachine.Tests
             resObj.Should().BeEquivalentTo(expectedResponse);
             await mockRepository.Received(1).DeleteMachineAsync("abc-def");
         }
+
+        public static TheoryData<MachineInventoryEntry[], Inventory[]> RestockMachineTestData()
+        {
+            return new TheoryData<MachineInventoryEntry[], Inventory[]>
+            {
+                {
+                    // Starting inventory
+                    [
+                        new() { Name = "Soda", Quantity = 5, CostPennies = 100 },
+                        new() { Name = "Chips", Quantity = 2, CostPennies = 100 },
+                    ],
+                    // Target inventory
+                    [
+                        new() { Name = "Soda", QuantityTarget = 10, CostPennies = 100 },
+                        new() { Name = "Chips", QuantityTarget = 5, CostPennies = 100 },
+                        new() { Name = "Candy", QuantityTarget = 3, CostPennies = 200 },
+                    ]
+                },
+                {
+                    // Starting inventory
+                    [],
+                    // Target inventory
+                    [
+                        new() { Name = "Water", QuantityTarget = 20, CostPennies = 50 },
+                    ]
+                },
+                {
+                    // Starting inventory
+                    [
+                        new() { Name = "Juice", Quantity = 1, CostPennies = 150 },
+                    ],
+                    // Target inventory
+                    [
+                        new() { Name = "Juice", QuantityTarget = 1, CostPennies = 150 }, // No change
+                    ]
+                }
+            };
+        }
+
+        [Theory]
+        [MemberData(nameof(RestockMachineTestData))]
+        public async Task TestRestockMachineSucceeds(MachineInventoryEntry[] startingInventory, Inventory[] targetInventory)
+        {
+            var mockRepository = Substitute.For<IRepository>();
+            mockRepository.GetMachineAsync("abc-def").Returns(new Models.Machine
+            {
+                PK = "MAC#abc-def",
+                SK = "MAC#abc-def",
+                Name = "Machine A",
+                Inventory = [.. startingInventory.Select(i => new Models.MachineInventoryEntry { Name = i.Name, Quantity = i.Quantity })]
+            });
+            var server = new Server(mockRepository);
+            var expectedResponse = new MachineRestockResponse
+            {
+                Success = true
+            };
+            var req = HttpTestHelpers.RequestFor("PUT /api/v1/machines/{id}/inventory", id: "abc-def", body: new MachineRestockRequest
+            {
+                Inventory = [..  targetInventory],
+            });
+            var res = await server.HandleRequest(req);
+            var resObj = HttpTestHelpers.GetResponseIsOK<MachineRestockResponse>(res);
+            resObj.Should().BeEquivalentTo(expectedResponse);
+            await mockRepository.Received(1).RestockMachineAsync("abc-def", Arg.Is<IEnumerable<Models.MachineInventoryEntry>>(inv =>
+                inv.Count() == targetInventory.Length &&
+                targetInventory.All(ti => inv.Any(i => i.Name == ti.Name && i.Quantity == ti.QuantityTarget && i.CostPennies == ti.CostPennies))
+            ));
+        }
     }
 }

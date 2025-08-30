@@ -146,9 +146,9 @@ namespace VendingMachine.Tests
             await mockRepository.Received(1).DeleteMachineAsync("abc-def");
         }
 
-        public static TheoryData<MachineInventoryEntry[], Inventory[]> RestockMachineTestData()
+        public static TheoryData<Models.MachineInventoryEntry[], Inventory[]> RestockMachineTestData()
         {
-            return new TheoryData<MachineInventoryEntry[], Inventory[]>
+            return new TheoryData<Models.MachineInventoryEntry[], Inventory[]>
             {
                 {
                     // Starting inventory
@@ -186,7 +186,7 @@ namespace VendingMachine.Tests
 
         [Theory]
         [MemberData(nameof(RestockMachineTestData))]
-        public async Task TestRestockMachineSucceeds(MachineInventoryEntry[] startingInventory, Inventory[] targetInventory)
+        public async Task TestRestockMachineSucceeds(Models.MachineInventoryEntry[] startingInventory, Inventory[] targetInventory)
         {
             var mockRepository = Substitute.For<IRepository>();
             mockRepository.GetMachineAsync("abc-def").Returns(new Models.Machine
@@ -194,7 +194,7 @@ namespace VendingMachine.Tests
                 PK = "MAC#abc-def",
                 SK = "MAC#abc-def",
                 Name = "Machine A",
-                Inventory = [.. startingInventory.Select(i => new Models.MachineInventoryEntry { Name = i.Name, Quantity = i.Quantity })]
+                Inventory = [.. startingInventory],
             });
             var server = new Server(mockRepository);
             var expectedResponse = new MachineRestockResponse
